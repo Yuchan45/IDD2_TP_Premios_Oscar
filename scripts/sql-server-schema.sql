@@ -1,0 +1,47 @@
+IF DB_ID(N'OscarAwards') IS NULL
+BEGIN
+  CREATE DATABASE [OscarAwards];
+END
+GO
+
+USE [OscarAwards];
+GO
+
+IF OBJECT_ID('dbo.roles', 'U') IS NULL
+CREATE TABLE dbo.roles (
+  id UNIQUEIDENTIFIER NOT NULL DEFAULT NEWID() PRIMARY KEY,
+  name NVARCHAR(50) NOT NULL UNIQUE,
+  created_at DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
+);
+GO
+
+IF OBJECT_ID('dbo.users', 'U') IS NULL
+CREATE TABLE dbo.users (
+  id UNIQUEIDENTIFIER NOT NULL DEFAULT NEWID() PRIMARY KEY,
+  email NVARCHAR(255) NOT NULL UNIQUE,
+  password_hash NVARCHAR(255) NOT NULL,
+  first_name NVARCHAR(100) NOT NULL,
+  last_name NVARCHAR(100) NOT NULL,
+  is_active BIT NOT NULL DEFAULT 1,
+  created_at DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
+  updated_at DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME()
+);
+GO
+
+IF OBJECT_ID('dbo.user_roles', 'U') IS NULL
+CREATE TABLE dbo.user_roles (
+  user_id UNIQUEIDENTIFIER NOT NULL,
+  role_id UNIQUEIDENTIFIER NOT NULL,
+  PRIMARY KEY (user_id, role_id),
+  CONSTRAINT fk_user_roles_user FOREIGN KEY (user_id) REFERENCES dbo.users(id),
+  CONSTRAINT fk_user_roles_role FOREIGN KEY (role_id) REFERENCES dbo.roles(id)
+);
+GO
+
+IF NOT EXISTS (SELECT 1 FROM dbo.roles WHERE name = 'ADMIN')
+  INSERT INTO dbo.roles (name) VALUES ('ADMIN');
+IF NOT EXISTS (SELECT 1 FROM dbo.roles WHERE name = 'ACADEMY_MEMBER')
+  INSERT INTO dbo.roles (name) VALUES ('ACADEMY_MEMBER');
+IF NOT EXISTS (SELECT 1 FROM dbo.roles WHERE name = 'COMMON_USER')
+  INSERT INTO dbo.roles (name) VALUES ('COMMON_USER');
+GO
