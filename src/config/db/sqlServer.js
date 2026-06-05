@@ -101,6 +101,21 @@ async function ensureSchema(activePool) {
     IF NOT EXISTS (SELECT 1 FROM dbo.rol WHERE nombre = 'COMMON_USER')
       INSERT INTO dbo.rol (nombre) VALUES ('COMMON_USER');
   `);
+
+  // Seed usuarios de prueba
+  await activePool.request().query(`
+    IF NOT EXISTS (SELECT 1 FROM dbo.usuario WHERE email = 'admin@oscar.com')
+      INSERT INTO dbo.usuario (id_rol, nombre, apellido, email, password_hash)
+      VALUES ((SELECT id_rol FROM dbo.rol WHERE nombre = 'ADMIN'), 'Admin', 'Oscar', 'admin@oscar.com', 'asd123');
+
+    IF NOT EXISTS (SELECT 1 FROM dbo.usuario WHERE email = 'miembro@oscar.com')
+      INSERT INTO dbo.usuario (id_rol, nombre, apellido, email, password_hash)
+      VALUES ((SELECT id_rol FROM dbo.rol WHERE nombre = 'ACADEMY_MEMBER'), 'Miembro', 'Academia', 'miembro@oscar.com', 'asd123');
+
+    IF NOT EXISTS (SELECT 1 FROM dbo.usuario WHERE email = 'usuario@oscar.com')
+      INSERT INTO dbo.usuario (id_rol, nombre, apellido, email, password_hash)
+      VALUES ((SELECT id_rol FROM dbo.rol WHERE nombre = 'COMMON_USER'), 'Usuario', 'Comun', 'usuario@oscar.com', 'asd123');
+  `);
 }
 
 async function connectSqlServer() {

@@ -76,3 +76,28 @@ CREATE TABLE dbo.auditoria (
   CONSTRAINT fk_auditoria_usuario FOREIGN KEY (id_usuario) REFERENCES dbo.usuario(id_usuario)
 );
 GO
+
+-- =============================================
+-- SEED: Usuarios de prueba (password: asd123)
+-- =============================================
+IF NOT EXISTS (SELECT 1 FROM dbo.usuario WHERE email = 'admin@oscar.com')
+  INSERT INTO dbo.usuario (id_rol, nombre, apellido, email, password_hash)
+  VALUES (
+    (SELECT id_rol FROM dbo.rol WHERE nombre = 'ADMIN'),
+    'Admin', 'Oscar', 'admin@oscar.com', 'asd123'
+  );
+
+IF NOT EXISTS (SELECT 1 FROM dbo.usuario WHERE email = 'miembro@oscar.com')
+  INSERT INTO dbo.usuario (id_rol, nombre, apellido, email, password_hash)
+  VALUES (
+    (SELECT id_rol FROM dbo.rol WHERE nombre = 'ACADEMY_MEMBER'),
+    'Miembro', 'Academia', 'miembro@oscar.com', 'asd123'
+  );
+
+IF NOT EXISTS (SELECT 1 FROM dbo.usuario WHERE email = 'usuario@oscar.com')
+  INSERT INTO dbo.usuario (id_rol, nombre, apellido, email, password_hash)
+  VALUES (
+    (SELECT id_rol FROM dbo.rol WHERE nombre = 'COMMON_USER'),
+    'Usuario', 'Comun', 'usuario@oscar.com', 'asd123'
+  );
+GO
