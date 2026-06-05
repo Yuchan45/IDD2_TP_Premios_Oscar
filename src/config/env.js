@@ -4,6 +4,7 @@ const env = {
   nodeEnv: process.env.NODE_ENV || "development",
   port: Number(process.env.PORT || 3000),
   mongoUri: process.env.MONGO_URI || "mongodb://localhost:27018/premios_oscar",
+  redisUrl: process.env.REDIS_URL || "redis://localhost:6379",
   sql: {
     host: process.env.SQL_SERVER_HOST || "localhost",
     port: Number(process.env.SQL_SERVER_PORT || 1433),
