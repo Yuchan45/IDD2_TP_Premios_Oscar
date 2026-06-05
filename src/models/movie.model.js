@@ -1,41 +1,62 @@
 const mongoose = require("mongoose");
 
-const movieSchema = new mongoose.Schema(
+const ROLE_NAMES = [
+  "Actor Principal",
+  "Actor Secundario",
+  "Director",
+  "Productor"
+];
+
+const castSchema = new mongoose.Schema(
   {
-    title: {
-      type: String,
-      required: true,
-      trim: true
-    },
-    releaseYear: {
-      type: Number,
+    profesionalId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Professional",
       required: true
     },
-    genre: {
+    rol: {
+      type: String,
+      required: true,
+      trim: true,
+      enum: ROLE_NAMES
+    }
+  },
+  { _id: false }
+);
+
+const movieSchema = new mongoose.Schema(
+  {
+    titulo: {
       type: String,
       required: true,
       trim: true
     },
-    description: {
+    anioEstreno: {
+      type: Number,
+      required: true,
+      min: 1888
+    },
+    genero: {
       type: String,
+      required: true,
+      trim: true
+    },
+    descripcion: {
+      type: String,
+      required: true,
+      trim: true,
       default: ""
     },
-    professionalRoles: [
-      {
-        professional: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "Professional",
-          required: true
-        },
-        role: {
-          type: String,
-          enum: ["Actor Principal", "Secundario", "Reparto", "Extra", null],
-          default: null
-        }
-      }
-    ]
+    reparto: {
+      type: [castSchema],
+      default: []
+    }
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    versionKey: false,
+    collection: "peliculas"
+  }
 );
 
 module.exports = mongoose.model("Movie", movieSchema);

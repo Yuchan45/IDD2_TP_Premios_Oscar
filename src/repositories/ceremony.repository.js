@@ -1,11 +1,11 @@
 const { Ceremony } = require("../models");
 
 function findAll(filters = {}) {
-  return Ceremony.find(filters).populate("categories").sort({ createdAt: -1 });
+  return Ceremony.find(filters).sort({ createdAt: -1 });
 }
 
 function findById(id) {
-  return Ceremony.findById(id).populate("categories");
+  return Ceremony.findById(id);
 }
 
 function create(data) {

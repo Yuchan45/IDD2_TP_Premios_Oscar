@@ -10,8 +10,8 @@ router.get("/:id", param("id").isMongoId(), validateRequest, categoryController.
 router.post(
   "/",
   [
-    body("name").isString().notEmpty(),
-    body("description").optional().isString()
+    body("nombre").isString().notEmpty(),
+    body("descripcion").optional().isString()
   ],
   validateRequest,
   categoryController.create
@@ -20,8 +20,8 @@ router.put(
   "/:id",
   [
     param("id").isMongoId(),
-    body("name").optional().isString().notEmpty(),
-    body("description").optional().isString()
+    body("nombre").optional().isString().notEmpty(),
+    body("descripcion").optional().isString()
   ],
   validateRequest,
   categoryController.update

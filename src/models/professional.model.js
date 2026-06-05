@@ -1,47 +1,51 @@
 const mongoose = require("mongoose");
 
+const ROLE_NAMES = [
+  "Actor Principal",
+  "Actor Secundario",
+  "Director",
+  "Productor"
+];
+
+const roleSchema = new mongoose.Schema(
+  {
+    nombre: {
+      type: String,
+      required: true,
+      trim: true,
+      enum: ROLE_NAMES
+    }
+  },
+  { _id: false }
+);
+
 const professionalSchema = new mongoose.Schema(
   {
-    firstName: {
+    nombre: {
       type: String,
       required: true,
       trim: true
     },
-    lastName: {
+    apellido: {
       type: String,
       required: true,
       trim: true
     },
-    stageName: {
-      type: String,
-      default: "",
-      trim: true
-    },
-    type: {
+    nacionalidad: {
       type: String,
       required: true,
-      enum: ["Actor", "Director", "Productor", "Guionista", "Maquillador"]
+      trim: true
     },
-    bio: {
-      type: String,
-      default: ""
-    },
-    movieRoles: [
-      {
-        movie: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "Movie",
-          required: true
-        },
-        role: {
-          type: String,
-          enum: ["Actor Principal", "Secundario", "Reparto", "Extra", null],
-          default: null
-        }
-      }
-    ]
+    roles: {
+      type: [roleSchema],
+      default: []
+    }
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    versionKey: false,
+    collection: "profesionales"
+  }
 );
 
 module.exports = mongoose.model("Professional", professionalSchema);

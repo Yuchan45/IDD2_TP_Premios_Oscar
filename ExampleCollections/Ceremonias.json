@@ -1,0 +1,132 @@
+{
+  "_id": "ceremonia2024",
+  "anio": 2024,
+  "fecha": "2024-03-10T00:00:00Z",
+  "lugar": "Dolby Theatre",
+
+  "actuaciones": [
+    {
+      "_id": "act1",
+      "tipo_actuacion": "Musical",
+      "artistas": [
+        {
+          "_id": "art1",
+          "nombre": "Billie Eilish",
+          "tipo": "Solista"
+        }
+      ]
+    },
+    {
+      "_id": "act2",
+      "tipo_actuacion": "Musical",
+      "artistas": [
+        {
+          "_id": "art2",
+          "nombre": "Ryan Gosling",
+          "tipo": "Actor/Cantante"
+        }
+      ]
+    }
+  ],
+
+  "nominaciones": [
+    {
+      "_id": "nom1",
+      "categoria": {
+        "_id": "cat1",
+        "nombre": "Mejor Actor"
+      },
+      "pelicula": {
+        "_id": "pel1",
+        "titulo": "Oppenheimer"
+      },
+      "profesional": {
+        "_id": "prof1",
+        "nombre": "Cillian Murphy"
+      },
+      "es_ganadora": true
+    },
+    {
+      "_id": "nom2",
+      "categoria": {
+        "_id": "cat1",
+        "nombre": "Mejor Actor"
+      },
+      "pelicula": {
+        "_id": "pel2",
+        "titulo": "Maestro"
+      },
+      "profesional": {
+        "_id": "prof2",
+        "nombre": "Bradley Cooper"
+      },
+      "es_ganadora": false
+    },
+    {
+      "_id": "nom3",
+      "categoria": {
+        "_id": "cat2",
+        "nombre": "Mejor Película"
+      },
+      "pelicula": {
+        "_id": "pel1",
+        "titulo": "Oppenheimer"
+      },
+      "profesional": null,
+      "es_ganadora": true
+    },
+    {
+      "_id": "nom4",
+      "categoria": {
+        "_id": "cat2",
+        "nombre": "Mejor Película"
+      },
+      "pelicula": {
+        "_id": "pel3",
+        "titulo": "Poor Things"
+      },
+      "profesional": null,
+      "es_ganadora": false
+    }
+  ],
+
+  "premios": [
+    {
+      "_id": "premio1",
+      "categoria": {
+        "_id": "cat1",
+        "nombre": "Mejor Actor"
+      },
+      "nominacion_ganadora_id": "nom1",
+      "ganador": {
+        "tipo": "Profesional",
+        "profesional": {
+          "_id": "prof1",
+          "nombre": "Cillian Murphy"
+        },
+        "pelicula": {
+          "_id": "pel1",
+          "titulo": "Oppenheimer"
+        }
+      },
+      "resultado": "Ganador"
+    },
+    {
+      "_id": "premio2",
+      "categoria": {
+        "_id": "cat2",
+        "nombre": "Mejor Película"
+      },
+      "nominacion_ganadora_id": "nom3",
+      "ganador": {
+        "tipo": "Película",
+        "profesional": null,
+        "pelicula": {
+          "_id": "pel1",
+          "titulo": "Oppenheimer"
+        }
+      },
+      "resultado": "Ganador"
+    }
+  ]
+}

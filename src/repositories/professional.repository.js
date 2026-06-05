@@ -1,13 +1,11 @@
 const { Professional } = require("../models");
 
 function findAll(filters = {}) {
-  return Professional.find(filters)
-    .populate("movieRoles.movie")
-    .sort({ createdAt: -1 });
+  return Professional.find(filters).sort({ createdAt: -1 });
 }
 
 function findById(id) {
-  return Professional.findById(id).populate("movieRoles.movie");
+  return Professional.findById(id);
 }
 
 function create(data) {
