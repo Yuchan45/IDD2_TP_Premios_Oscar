@@ -70,6 +70,16 @@ Cada recurso soporta:
 - `PUT /api/<resource>/:id`
 - `DELETE /api/<resource>/:id`
 
+ ## Usuarios de prueba                                                                    
+                                                                                           
+  Todos los usuarios se crean automáticamente al levantar la app. Password: `asd123`       
+                                                                                           
+  | Email | Rol | Permisos |                                                               
+  |---|---|---|                                                                            
+  | `admin@oscar.com` | ADMIN | CRUD completo, ver auditoría |
+  | `miembro@oscar.com` | ACADEMY_MEMBER | Votar en categorías |                           
+  | `usuario@oscar.com` | COMMON_USER | Solo consultas |                 
+  
 ## Notas
 
 - No hay autenticacion ni autorizacion en esta version.
