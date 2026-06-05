@@ -1,4 +1,5 @@
 const userRepository = require("../repositories/user.repository");
+const auditRepository = require("../repositories/audit.repository");
 const HttpError = require("../utils/httpError");
 
 function findAll() {
@@ -8,23 +9,58 @@ function findAll() {
 async function findById(id) {
   const user = await userRepository.findById(id);
   if (!user) {
-    throw new HttpError(404, "User not found.");
+    throw new HttpError(404, "Usuario no encontrado.");
   }
   return user;
 }
 
-function create(data) {
-  return userRepository.create(data);
+async function create(data, actionUserId) {
+  const user = await userRepository.create(data);
+
+  if (actionUserId) {
+    await auditRepository.log({
+      idUsuario: actionUserId,
+      accion: "CREATE",
+      entidad: "USUARIO",
+      idEntidad: String(user.id),
+      detalle: JSON.stringify({ email: data.email, rol: data.rol })
+    });
+  }
+
+  return user;
 }
 
-async function update(id, data) {
+async function update(id, data, actionUserId) {
   await findById(id);
-  return userRepository.update(id, data);
+  const user = await userRepository.update(id, data);
+
+  if (actionUserId) {
+    await auditRepository.log({
+      idUsuario: actionUserId,
+      accion: "UPDATE",
+      entidad: "USUARIO",
+      idEntidad: String(id),
+      detalle: JSON.stringify(data)
+    });
+  }
+
+  return user;
 }
 
-async function remove(id) {
+async function remove(id, actionUserId) {
   await findById(id);
-  return userRepository.remove(id);
+  const result = await userRepository.remove(id);
+
+  if (actionUserId) {
+    await auditRepository.log({
+      idUsuario: actionUserId,
+      accion: "DELETE",
+      entidad: "USUARIO",
+      idEntidad: String(id)
+    });
+  }
+
+  return result;
 }
 
 module.exports = {
