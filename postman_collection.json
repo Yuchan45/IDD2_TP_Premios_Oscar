@@ -1,0 +1,203 @@
+{
+  "info": {
+    "name": "Premios Oscar API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000/api" },
+    { "key": "token", "value": "" },
+    { "key": "ceremonyId", "value": "" },
+    { "key": "nominacionId", "value": "" },
+    { "key": "categoryId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.token) pm.collectionVariables.set('token', json.token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@oscar.com\",\n  \"password\": \"asd123\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Me",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/auth/me"
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/auth/logout"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Ceremonies",
+      "item": [
+        {
+          "name": "Listar ceremonias",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/ceremonies"
+          }
+        },
+        {
+          "name": "Obtener ceremonia",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/ceremonies/{{ceremonyId}}"
+          }
+        },
+        {
+          "name": "Listar nominaciones",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/ceremonies/{{ceremonyId}}/nominaciones",
+              "query": [
+                {
+                  "key": "categoriaId",
+                  "value": "{{categoryId}}",
+                  "disabled": true
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Crear ceremonia (ADMIN)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.data?._id) pm.collectionVariables.set('ceremonyId', json.data._id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{baseUrl}}/ceremonies",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"anio\": 2024,\n  \"fecha\": \"2024-03-10T00:00:00.000Z\",\n  \"lugar\": \"Dolby Theatre, Los Angeles\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Actualizar ceremonia (ADMIN)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{baseUrl}}/ceremonies/{{ceremonyId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"anio\": 2024,\n  \"fecha\": \"2024-03-10T00:00:00.000Z\",\n  \"lugar\": \"Dolby Theatre, Los Angeles (actualizado)\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Cerrar ceremonia (ADMIN)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/ceremonies/{{ceremonyId}}/close"
+          }
+        },
+        {
+          "name": "Eliminar ceremonia (ADMIN)",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{baseUrl}}/ceremonies/{{ceremonyId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Votes",
+      "item": [
+        {
+          "name": "Emitir voto (ACADEMY_MEMBER)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "url": "{{baseUrl}}/votes",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idCeremonia\": \"{{ceremonyId}}\",\n  \"nominacionId\": \"{{nominacionId}}\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Mi voto",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/votes/my-vote?idCeremonia={{ceremonyId}}&idCategoria={{categoryId}}",
+              "query": [
+                { "key": "idCeremonia", "value": "{{ceremonyId}}" },
+                { "key": "idCategoria", "value": "{{categoryId}}" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Conteo de votos",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/votes?idCeremonia={{ceremonyId}}",
+              "query": [
+                { "key": "idCeremonia", "value": "{{ceremonyId}}" },
+                {
+                  "key": "idCategoria",
+                  "value": "{{categoryId}}",
+                  "disabled": true
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

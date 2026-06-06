@@ -38,7 +38,8 @@ async function remove(id) {
 async function close(id) {
   const ceremony = await ceremonyRepository.findById(id);
   if (!ceremony) throw new HttpError(404, "Ceremonia no encontrada.");
-  if (ceremony.estado === "cerrada") throw new HttpError(409, "La ceremonia ya esta cerrada.");
+  if (ceremony.estado === "cerrada")
+    throw new HttpError(409, "La ceremonia ya esta cerrada.");
 
   const voteCounts = await voteRepository.countsByCeremony({ ceremonyId: id });
 
@@ -62,7 +63,7 @@ async function close(id) {
       nominadoGanadorId: nominacionId,
       ganador: nom.pelicula
         ? { tipo: "pelicula", pelicula: nom.pelicula, profesional: null }
-        : { tipo: "profesional", profesional: nom.profesional, pelicula: null }
+        : { tipo: "profesional", profesional: nom.profesional, pelicula: null },
     });
   }
 
@@ -81,6 +82,39 @@ async function findNominaciones(id, filters) {
   return ceremonyRepository.findNominaciones(id, filters);
 }
 
+async function addNominacion(id, data) {
+  const ceremony = await ceremonyRepository.findById(id);
+  if (!ceremony) throw new HttpError(404, "Ceremonia no encontrada.");
+  if (ceremony.estado === "cerrada")
+    throw new HttpError(409, "La ceremonia ya esta cerrada.");
+  const { esGanador: _, ...safeData } = data;
+  ceremony.nominaciones.push(safeData);
+  return ceremony.save();
+}
+
+async function updateNominacion(id, nomId, data) {
+  const ceremony = await ceremonyRepository.findById(id);
+  if (!ceremony) throw new HttpError(404, "Ceremonia no encontrada.");
+  if (ceremony.estado === "cerrada")
+    throw new HttpError(409, "La ceremonia ya esta cerrada.");
+  const nom = ceremony.nominaciones.id(nomId);
+  if (!nom) throw new HttpError(404, "Nominacion no encontrada.");
+  const { esGanador: _, ...safeData } = data;
+  Object.assign(nom, safeData);
+  return ceremony.save();
+}
+
+async function removeNominacion(id, nomId) {
+  const ceremony = await ceremonyRepository.findById(id);
+  if (!ceremony) throw new HttpError(404, "Ceremonia no encontrada.");
+  if (ceremony.estado === "cerrada")
+    throw new HttpError(409, "La ceremonia ya esta cerrada.");
+  const nom = ceremony.nominaciones.id(nomId);
+  if (!nom) throw new HttpError(404, "Nominacion no encontrada.");
+  nom.deleteOne();
+  return ceremony.save();
+}
+
 module.exports = {
   findAll,
   findById,
@@ -88,5 +122,8 @@ module.exports = {
   update,
   remove,
   close,
-  findNominaciones
+  findNominaciones,
+  addNominacion,
+  updateNominacion,
+  removeNominacion,
 };
