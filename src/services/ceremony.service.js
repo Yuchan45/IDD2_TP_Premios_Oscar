@@ -1,5 +1,6 @@
 const ceremonyRepository = require("../repositories/ceremony.repository");
 const voteRepository = require("../repositories/vote.repository");
+const { getRedisClient } = require("../config/db/redis");
 const HttpError = require("../utils/httpError");
 
 function findAll(filters) {
@@ -67,7 +68,11 @@ async function close(id) {
 
   ceremony.premios = premios;
   ceremony.estado = "cerrada";
-  return ceremony.save();
+  const saved = await ceremony.save();
+
+  await getRedisClient().set(`ceremony:closed:${id}`, "1");
+
+  return saved;
 }
 
 async function findNominaciones(id, filters) {

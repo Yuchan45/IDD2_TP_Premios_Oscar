@@ -7,6 +7,12 @@ const HttpError = require("../utils/httpError");
 const LOCK_TTL = 5; // segundos
 
 async function castVote({ idUsuario, idCeremonia, nominacionId }) {
+  const redis = getRedisClient();
+  const isClosed = await redis.exists(`ceremony:closed:${idCeremonia}`);
+  if (isClosed) {
+    throw new HttpError(409, "Las votaciones de esta ceremonia ya estan cerradas.");
+  }
+
   const ceremony = await ceremonyRepository.findById(idCeremonia);
   if (!ceremony) {
     throw new HttpError(404, "Ceremonia no encontrada.");
@@ -22,7 +28,6 @@ async function castVote({ idUsuario, idCeremonia, nominacionId }) {
 
   const categoryId = nominacion.categoria.id.toString();
 
-  const redis = getRedisClient();
   const lockKey = `lock:vote:${idUsuario}:${categoryId}:${idCeremonia}`;
   const acquired = await redis.set(lockKey, "1", { NX: true, EX: LOCK_TTL });
 
