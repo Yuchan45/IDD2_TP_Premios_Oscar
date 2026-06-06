@@ -11,17 +11,19 @@ async function castVote({ idUsuario, idCeremonia, nominacionId }) {
   if (!ceremony) {
     throw new HttpError(404, "Ceremonia no encontrada.");
   }
+  if (ceremony.estado === "cerrada") {
+    throw new HttpError(409, "Las votaciones de esta ceremonia ya estan cerradas.");
+  }
 
   const nominacion = ceremony.nominaciones.id(nominacionId);
   if (!nominacion) {
     throw new HttpError(404, "Nominacion no encontrada en esta ceremonia.");
   }
 
-  const idCategoria = nominacion.categoria.id.toString();
+  const categoryId = nominacion.categoria.id.toString();
 
-  // Redis lock para evitar votos duplicados simultaneos
   const redis = getRedisClient();
-  const lockKey = `lock:vote:${idUsuario}:${idCategoria}:${idCeremonia}`;
+  const lockKey = `lock:vote:${idUsuario}:${categoryId}:${idCeremonia}`;
   const acquired = await redis.set(lockKey, "1", { NX: true, EX: LOCK_TTL });
 
   if (!acquired) {
@@ -30,24 +32,24 @@ async function castVote({ idUsuario, idCeremonia, nominacionId }) {
 
   try {
     const vote = await voteRepository.create({
-      idUsuario,
-      idCategoria,
-      idNominacion: nominacionId,
-      idCeremonia
+      userId: idUsuario,
+      ceremonyId: idCeremonia,
+      categoryId,
+      nominacionId
     });
 
     await auditRepository.log({
       idUsuario,
       accion: "CREATE",
       entidad: "VOTACION",
-      idEntidad: String(vote.idVotacion),
-      detalle: JSON.stringify({ idCeremonia, idCategoria, nominacionId })
+      idEntidad: String(vote._id),
+      detalle: JSON.stringify({ idCeremonia, categoryId, nominacionId })
     });
 
     return vote;
   } catch (err) {
-    // SQL Server unique constraint violation
-    if (err.number === 2627 || err.number === 2601) {
+    // MongoDB duplicate key (índice único userId+ceremonyId+categoryId)
+    if (err.code === 11000) {
       throw new HttpError(409, "El usuario ya emitio un voto en esta categoria para esta ceremonia.");
     }
     throw err;
@@ -57,11 +59,11 @@ async function castVote({ idUsuario, idCeremonia, nominacionId }) {
 }
 
 async function getMyVote({ idUsuario, idCeremonia, idCategoria }) {
-  return voteRepository.findByUser({ idUsuario, idCeremonia, idCategoria });
+  return voteRepository.findByUser({ userId: idUsuario, ceremonyId: idCeremonia, categoryId: idCategoria });
 }
 
 async function getVoteCounts({ idCeremonia, idCategoria }) {
-  return voteRepository.countsByCeremony({ idCeremonia, idCategoria });
+  return voteRepository.countsByCeremony({ ceremonyId: idCeremonia, categoryId: idCategoria });
 }
 
 module.exports = {

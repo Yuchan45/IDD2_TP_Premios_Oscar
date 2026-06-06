@@ -8,15 +8,15 @@ const categorySnapshotSchema = new mongoose.Schema(
     id: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Category",
-      required: true
+      required: true,
     },
     nombre: {
       type: String,
       required: true,
-      trim: true
-    }
+      trim: true,
+    },
   },
-  { _id: false }
+  { _id: false },
 );
 
 const movieSnapshotSchema = new mongoose.Schema(
@@ -24,15 +24,15 @@ const movieSnapshotSchema = new mongoose.Schema(
     id: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Movie",
-      required: true
+      required: true,
     },
     titulo: {
       type: String,
       required: true,
-      trim: true
-    }
+      trim: true,
+    },
   },
-  { _id: false }
+  { _id: false },
 );
 
 const professionalSnapshotSchema = new mongoose.Schema(
@@ -40,15 +40,15 @@ const professionalSnapshotSchema = new mongoose.Schema(
     id: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Professional",
-      required: true
+      required: true,
     },
     nombreCompleto: {
       type: String,
       required: true,
-      trim: true
-    }
+      trim: true,
+    },
   },
-  { _id: false }
+  { _id: false },
 );
 
 const artistSchema = new mongoose.Schema(
@@ -56,16 +56,16 @@ const artistSchema = new mongoose.Schema(
     nombre: {
       type: String,
       required: true,
-      trim: true
+      trim: true,
     },
     tipo: {
       type: String,
       required: true,
       trim: true,
-      enum: ARTIST_TYPES
-    }
+      enum: ARTIST_TYPES,
+    },
   },
-  { _id: false }
+  { _id: false },
 );
 
 const performanceSchema = new mongoose.Schema(
@@ -73,37 +73,37 @@ const performanceSchema = new mongoose.Schema(
     tipoActuacion: {
       type: String,
       required: true,
-      trim: true
+      trim: true,
     },
     artistas: {
       type: [artistSchema],
-      default: []
-    }
+      default: [],
+    },
   },
-  { _id: false }
+  { _id: false },
 );
 
 const nominationSchema = new mongoose.Schema(
   {
     categoria: {
       type: categorySnapshotSchema,
-      required: true
+      required: true,
     },
     pelicula: {
       type: movieSnapshotSchema,
-      default: null
+      default: null,
     },
     profesional: {
       type: professionalSnapshotSchema,
-      default: null
+      default: null,
     },
     esGanador: {
       type: Boolean,
       required: true,
-      default: false
-    }
+      default: false,
+    },
   },
-  { _id: true }
+  { _id: true },
 );
 
 nominationSchema.pre("validate", function validateNomination(next) {
@@ -113,7 +113,7 @@ nominationSchema.pre("validate", function validateNomination(next) {
   if (hasMovie === hasProfessional) {
     this.invalidate(
       "nominacion",
-      "La nominacion debe referenciar exactamente una pelicula o un profesional."
+      "La nominacion debe referenciar exactamente una pelicula o un profesional.",
     );
   }
 
@@ -125,36 +125,36 @@ const winnerSchema = new mongoose.Schema(
     tipo: {
       type: String,
       required: true,
-      enum: WINNER_TYPES
+      enum: WINNER_TYPES,
     },
     pelicula: {
       type: movieSnapshotSchema,
-      default: null
+      default: null,
     },
     profesional: {
       type: professionalSnapshotSchema,
-      default: null
-    }
+      default: null,
+    },
   },
-  { _id: false }
+  { _id: false },
 );
 
 const awardSchema = new mongoose.Schema(
   {
     categoria: {
       type: categorySnapshotSchema,
-      required: true
+      required: true,
     },
     nominadoGanadorId: {
       type: mongoose.Schema.Types.ObjectId,
-      required: true
+      required: true,
     },
     ganador: {
       type: winnerSchema,
-      required: true
-    }
+      required: true,
+    },
   },
-  { _id: false }
+  { _id: false },
 );
 
 awardSchema.pre("validate", function validateAward(next) {
@@ -167,54 +167,64 @@ awardSchema.pre("validate", function validateAward(next) {
   if (hasMovie === hasProfessional) {
     this.invalidate(
       "ganador",
-      "El ganador debe contener exactamente una pelicula o un profesional."
+      "El ganador debe contener exactamente una pelicula o un profesional.",
     );
   }
 
-  if ((isMovieWinner && !hasMovie) || (isProfessionalWinner && !hasProfessional)) {
+  if (
+    (isMovieWinner && !hasMovie) ||
+    (isProfessionalWinner && !hasProfessional)
+  ) {
     this.invalidate(
       "ganador.tipo",
-      "El tipo de ganador no coincide con el snapshot embebido."
+      "El tipo de ganador no coincide con el snapshot embebido.",
     );
   }
 
   return next();
 });
 
+const CEREMONY_STATES = ["abierta", "cerrada"];
+
 const ceremonySchema = new mongoose.Schema(
   {
     anio: {
       type: Number,
       required: true,
-      min: 1929
+      min: 1929,
     },
     fecha: {
       type: Date,
-      required: true
+      required: true,
     },
     lugar: {
       type: String,
       required: true,
-      trim: true
+      trim: true,
+    },
+    estado: {
+      type: String,
+      enum: CEREMONY_STATES,
+      default: "abierta",
     },
     actuaciones: {
       type: [performanceSchema],
-      default: []
+      default: [],
     },
     nominaciones: {
       type: [nominationSchema],
-      default: []
+      default: [],
     },
     premios: {
       type: [awardSchema],
-      default: []
-    }
+      default: [],
+    },
   },
   {
     timestamps: true,
     versionKey: false,
-    collection: "ceremonias"
-  }
+    collection: "ceremonias",
+  },
 );
 
 module.exports = mongoose.model("Ceremony", ceremonySchema);

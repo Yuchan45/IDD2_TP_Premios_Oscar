@@ -5,7 +5,8 @@ const { cache } = require("../middlewares/cache");
 const {
   ceremonyIdValidation,
   createCeremonyValidation,
-  updateCeremonyValidation
+  updateCeremonyValidation,
+  listNominacionesValidation
 } = require("../validations/ceremony.validation");
 
 const router = Router();
@@ -13,6 +14,8 @@ const router = Router();
 router.get("/", cache("ceremonies", 120), ceremonyController.list);
 router.get("/:id", ceremonyIdValidation, validateRequest, cache("ceremonies", 120), ceremonyController.get);
 router.post("/", createCeremonyValidation, validateRequest, ceremonyController.create);
+router.get("/:id/nominaciones", listNominacionesValidation, validateRequest, ceremonyController.listNominaciones);
+router.post("/:id/close", ceremonyIdValidation, validateRequest, ceremonyController.close);
 router.put("/:id", updateCeremonyValidation, validateRequest, ceremonyController.update);
 router.delete("/:id", ceremonyIdValidation, validateRequest, ceremonyController.remove);
 

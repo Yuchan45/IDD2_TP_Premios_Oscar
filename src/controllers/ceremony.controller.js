@@ -26,10 +26,22 @@ const remove = asyncHandler(async (req, res) => {
   res.json({ data });
 });
 
+const close = asyncHandler(async (req, res) => {
+  const data = await ceremonyService.close(req.params.id);
+  res.json({ data });
+});
+
+const listNominaciones = asyncHandler(async (req, res) => {
+  const data = await ceremonyService.findNominaciones(req.params.id, req.query);
+  res.json({ data });
+});
+
 module.exports = {
   list,
   get,
   create,
   update,
-  remove
+  remove,
+  close,
+  listNominaciones
 };

@@ -1,4 +1,4 @@
-const { body, checkExact, param } = require("express-validator");
+const { body, checkExact, param, query } = require("express-validator");
 
 const validArtistTypes = ["Cantante", "Banda", "Orquesta"];
 const validWinnerTypes = ["pelicula", "profesional"];
@@ -120,8 +120,14 @@ const updateCeremonyValidation = checkExact([
   ...ceremonyPayloadValidation
 ]);
 
+const listNominacionesValidation = [
+  param("id").isMongoId(),
+  query("categoriaId").optional().isMongoId()
+];
+
 module.exports = {
   ceremonyIdValidation,
   createCeremonyValidation,
-  updateCeremonyValidation
+  updateCeremonyValidation,
+  listNominacionesValidation
 };
