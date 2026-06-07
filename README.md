@@ -5,7 +5,7 @@ API REST basica con arquitectura MVC tradicional para gestionar entidades princi
 ## Stack
 
 - Node.js + Express
-- MongoDB: peliculas, categorias, profesionales, ceremonias, nominaciones y actuaciones musicales
+- MongoDB: peliculas, categorias, profesionales y ceremonias
 - SQL Server: usuarios y roles
 
 Redis, Cassandra, votaciones, sesiones, autenticacion y reportes historicos quedan fuera de esta version base.
@@ -40,14 +40,19 @@ routes -> controllers -> services -> repositories -> models / config db
 
 ## Inicio rapido
 
+1. Crear o completar el archivo `.env` en la raiz del proyecto.
+2. Usar `.env.example` solo como plantilla de referencia.
+3. Levantar dependencias:
+
 ```bash
-cp .env.example .env
 docker compose up -d
 npm install
 npm run dev
 ```
 
 La API queda disponible en `http://localhost:3000`.
+
+La aplicacion carga variables desde `./.env` de forma explicita en runtime.
 
 ## Endpoints
 
@@ -59,8 +64,6 @@ Todos los endpoints son CRUD simples.
 - `/api/categories`
 - `/api/professionals`
 - `/api/ceremonies`
-- `/api/nominations`
-- `/api/performances`
 
 Cada recurso soporta:
 

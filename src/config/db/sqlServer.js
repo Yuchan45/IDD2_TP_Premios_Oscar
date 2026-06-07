@@ -1,5 +1,6 @@
 const sql = require("mssql");
 const env = require("../env");
+const { logger } = require("../logger");
 
 let pool;
 
@@ -30,6 +31,7 @@ function assertSafeIdentifier(value) {
 
 async function ensureDatabase() {
   assertSafeIdentifier(env.sql.database);
+  logger.info({ database: env.sql.database }, "Ensuring SQL Server database exists");
   const masterPool = await sql.connect(baseConfig("master"));
   await masterPool.request().query(`
     IF DB_ID(N'${env.sql.database}') IS NULL
@@ -38,9 +40,11 @@ async function ensureDatabase() {
     END
   `);
   await masterPool.close();
+  logger.info({ database: env.sql.database }, "SQL Server database ready");
 }
 
 async function ensureSchema(activePool) {
+  logger.info({ database: env.sql.database }, "Ensuring SQL Server schema exists");
   await activePool.request().query(`
     IF OBJECT_ID('dbo.roles', 'U') IS NULL
     CREATE TABLE dbo.roles (
@@ -80,16 +84,23 @@ async function ensureSchema(activePool) {
     IF NOT EXISTS (SELECT 1 FROM dbo.roles WHERE name = 'COMMON_USER')
       INSERT INTO dbo.roles (name) VALUES ('COMMON_USER');
   `);
+  logger.info({ database: env.sql.database }, "SQL Server schema ready");
 }
 
 async function connectSqlServer() {
   if (pool && pool.connected) {
+    logger.info({ database: env.sql.database }, "SQL Server pool already connected");
     return pool;
   }
 
+  logger.info(
+    { host: env.sql.host, port: env.sql.port, database: env.sql.database },
+    "Connecting to SQL Server"
+  );
   await ensureDatabase();
   pool = await new sql.ConnectionPool(baseConfig(env.sql.database)).connect();
   await ensureSchema(pool);
+  logger.info({ database: env.sql.database }, "SQL Server connected");
   return pool;
 }
 
@@ -102,8 +113,10 @@ function getSqlPool() {
 
 async function disconnectSqlServer() {
   if (pool) {
+    logger.info({ database: env.sql.database }, "Disconnecting SQL Server");
     await pool.close();
     pool = undefined;
+    logger.info({ database: env.sql.database }, "SQL Server disconnected");
   }
 }
 
