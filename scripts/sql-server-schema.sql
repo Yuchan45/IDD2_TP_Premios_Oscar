@@ -45,22 +45,6 @@ CREATE TABLE dbo.usuario (
 GO
 
 -- =============================================
--- TABLA: VOTACION
--- =============================================
-IF OBJECT_ID('dbo.votacion', 'U') IS NULL
-CREATE TABLE dbo.votacion (
-  id_votacion     INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
-  id_usuario      INT NOT NULL,
-  id_categoria    NVARCHAR(24) NOT NULL,
-  id_nominacion   NVARCHAR(24) NOT NULL,
-  id_ceremonia    NVARCHAR(24) NOT NULL,
-  fecha_voto      DATE NOT NULL DEFAULT CAST(SYSUTCDATETIME() AS DATE),
-  CONSTRAINT fk_votacion_usuario FOREIGN KEY (id_usuario) REFERENCES dbo.usuario(id_usuario),
-  CONSTRAINT uq_voto_unico UNIQUE (id_usuario, id_categoria, id_ceremonia)
-);
-GO
-
--- =============================================
 -- TABLA: AUDITORIA
 -- Registra acciones criticas de los usuarios
 -- =============================================

@@ -1,4 +1,5 @@
 const { getRedisClient } = require("../config/db/redis");
+const { logger } = require("../config/logger");
 
 function cache(keyPrefix, ttl = 60) {
   return async (req, res, next) => {
@@ -30,11 +31,18 @@ function invalidateCache(keyPrefix) {
     const originalJson = res.json.bind(res);
 
     res.json = (body) => {
-      Promise.resolve()
-        .then(() => purgeCacheByPrefix(keyPrefix))
-        .catch(() => {});
+      const shouldInvalidate = res.statusCode >= 200 && res.statusCode < 400;
+      const invalidation = shouldInvalidate ? purgeCacheByPrefix(keyPrefix) : Promise.resolve();
 
-      return originalJson(body);
+      invalidation
+        .catch((err) => {
+          logger.warn({ err, keyPrefix }, "Cache invalidation failed");
+        })
+        .finally(() => {
+          originalJson(body);
+        });
+
+      return res;
     };
 
     next();
@@ -42,18 +50,19 @@ function invalidateCache(keyPrefix) {
 }
 
 async function purgeCacheByPrefix(keyPrefix) {
-  try {
-    const redis = getRedisClient();
-    const keys = [];
-    for await (const key of redis.scanIterator({ MATCH: `cache:${keyPrefix}:*` })) {
-      keys.push(key);
-    }
+  const redis = getRedisClient();
+  const keys = [];
 
-    if (keys.length) {
-      await redis.del(keys);
+  for await (const keyOrKeys of redis.scanIterator({ MATCH: `cache:${keyPrefix}:*` })) {
+    if (Array.isArray(keyOrKeys)) {
+      keys.push(...keyOrKeys);
+    } else {
+      keys.push(keyOrKeys);
     }
-  } catch {
-    // Cache invalidation is best-effort
+  }
+
+  if (keys.length) {
+    await redis.del(keys);
   }
 }
 
@@ -61,8 +70,8 @@ function invalidateCacheNow(keyPrefix) {
   return async () => {
     try {
       await purgeCacheByPrefix(keyPrefix);
-    } catch {
-      // Cache invalidation is best-effort
+    } catch (err) {
+      logger.warn({ err, keyPrefix }, "Cache invalidation failed");
     }
   };
 }
