@@ -3,7 +3,11 @@ const voteController = require("../controllers/vote.controller");
 const authenticate = require("../middlewares/authenticate");
 const authorize = require("../middlewares/authorize");
 const validateRequest = require("../middlewares/validateRequest");
-const { castVoteValidation, voteQueryValidation } = require("../validations/vote.validation");
+const {
+  castVoteValidation,
+  myVotesQueryValidation,
+  voteQueryValidation
+} = require("../validations/vote.validation");
 
 const router = Router();
 
@@ -16,7 +20,7 @@ router.post(
   validateRequest,
   voteController.cast
 );
-router.get("/my-vote", voteQueryValidation, validateRequest, voteController.myVote);
+router.get("/my-votes", myVotesQueryValidation, validateRequest, voteController.myVote);
 router.get("/", voteQueryValidation, validateRequest, voteController.counts);
 
 module.exports = router;

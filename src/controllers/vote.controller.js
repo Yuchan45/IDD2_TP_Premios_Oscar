@@ -11,8 +11,8 @@ const cast = asyncHandler(async (req, res) => {
 const myVote = asyncHandler(async (req, res) => {
   const { idCeremonia, idCategoria } = req.query;
   const idUsuario = req.user.id;
-  const data = await voteService.getMyVote({ idUsuario, idCeremonia, idCategoria });
-  res.json({ data: data || null });
+  const data = await voteService.getMyVotes({ idUsuario, idCeremonia, idCategoria });
+  res.json({ data });
 });
 
 const counts = asyncHandler(async (req, res) => {

@@ -5,14 +5,18 @@ function create({ userId, ceremonyId, categoryId, nominacionId }) {
   return Vote.create({ userId, ceremonyId, categoryId, nominacionId });
 }
 
-function findByUser({ userId, ceremonyId, categoryId }) {
-  const filters = { userId, ceremonyId };
+function findAllByUser({ userId, ceremonyId, categoryId }) {
+  const filters = { userId };
+
+  if (ceremonyId) {
+    filters.ceremonyId = ceremonyId;
+  }
 
   if (categoryId) {
     filters.categoryId = categoryId;
   }
 
-  return Vote.findOne(filters);
+  return Vote.find(filters).sort({ createdAt: -1 });
 }
 
 function countsByCeremony({ ceremonyId, categoryId }) {
@@ -41,8 +45,13 @@ function countsByCeremony({ ceremonyId, categoryId }) {
   ]);
 }
 
+function countTotalByCeremony(ceremonyId) {
+  return Vote.countDocuments({ ceremonyId });
+}
+
 module.exports = {
   create,
-  findByUser,
+  findAllByUser,
   countsByCeremony,
+  countTotalByCeremony,
 };

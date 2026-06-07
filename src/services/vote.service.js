@@ -66,65 +66,118 @@ async function castVote({ idUsuario, idCeremonia, nominacionId }) {
   }
 }
 
-async function getMyVote({ idUsuario, idCeremonia, idCategoria }) {
-  const vote = await voteRepository.findByUser({
+function buildCeremonySummary(ceremony, fallbackId) {
+  if (!ceremony) {
+    return { id: fallbackId };
+  }
+
+  return {
+    id: ceremony._id,
+    anio: ceremony.anio,
+    fecha: ceremony.fecha,
+    lugar: ceremony.lugar,
+    estado: ceremony.estado
+  };
+}
+
+function buildCategorySummary(category, snapshot, fallbackId) {
+  if (category) {
+    return {
+      id: category._id,
+      nombre: category.nombre,
+      descripcion: category.descripcion
+    };
+  }
+
+  if (snapshot) {
+    return {
+      id: snapshot.id,
+      nombre: snapshot.nombre,
+      descripcion: snapshot.descripcion
+    };
+  }
+
+  return { id: fallbackId };
+}
+
+async function getMyVotes({ idUsuario, idCeremonia, idCategoria }) {
+  const votes = await voteRepository.findAllByUser({
     userId: idUsuario,
     ceremonyId: idCeremonia,
     categoryId: idCategoria
   });
 
-  if (!vote) {
-    return null;
+  if (!votes.length) {
+    return [];
   }
 
-  const ceremony = await ceremonyRepository.findById(vote.ceremonyId);
-  const nomination = ceremony?.nominaciones.id(vote.nominacionId);
-  const categoryId = nomination?.categoria?.id || vote.categoryId;
-  const category = categoryId ? await categoryRepository.findById(categoryId) : null;
+  const ceremonyIds = [...new Set(votes.map((vote) => vote.ceremonyId.toString()))];
+  const ceremonies = await Promise.all(ceremonyIds.map((id) => ceremonyRepository.findById(id)));
+  const ceremonyById = new Map(
+    ceremonies.filter(Boolean).map((ceremony) => [ceremony._id.toString(), ceremony])
+  );
 
-  return {
-    nominacion: nomination
-      ? {
-          id: nomination._id,
-          pelicula: nomination.pelicula,
-          profesional: nomination.profesional,
-          esGanador: nomination.esGanador
-        }
-      : {
-          id: vote.nominacionId
-        },
-    voto: {
-      id: vote._id,
-      userId: vote.userId,
-      createdAt: vote.createdAt,
-      updatedAt: vote.updatedAt
-    },
-    ceremonia: ceremony
-      ? {
-          id: ceremony._id,
-          anio: ceremony.anio,
-          fecha: ceremony.fecha,
-          lugar: ceremony.lugar,
-          estado: ceremony.estado
-        }
-      : {
-          id: vote.ceremonyId
-        },
-    categoria: category
-      ? {
-          id: category._id,
-          nombre: category.nombre,
-          descripcion: category.descripcion
-        }
-      : nomination?.categoria || {
-          id: vote.categoryId
-        },
-  };
+  const categoryIds = new Set();
+  const contexts = votes.map((vote) => {
+    const ceremony = ceremonyById.get(vote.ceremonyId.toString());
+    const nomination = ceremony?.nominaciones.id(vote.nominacionId);
+    const categoryId = nomination?.categoria?.id || vote.categoryId;
+
+    if (categoryId) {
+      categoryIds.add(categoryId.toString());
+    }
+
+    return {
+      vote,
+      ceremony,
+      nomination,
+      categoryId
+    };
+  });
+
+  const categories = await Promise.all(
+    [...categoryIds].map((id) => categoryRepository.findById(id))
+  );
+  const categoryById = new Map(
+    categories.filter(Boolean).map((category) => [category._id.toString(), category])
+  );
+
+  return contexts.map(({ vote, ceremony, nomination, categoryId }) => {
+    const category = categoryId ? categoryById.get(categoryId.toString()) : null;
+    const categorySummary = buildCategorySummary(
+      category,
+      nomination?.categoria,
+      categoryId || vote.categoryId
+    );
+
+    return {
+      voto: {
+        id: vote._id,
+        userId: vote.userId,
+        createdAt: vote.createdAt,
+        updatedAt: vote.updatedAt
+      },
+      ceremonia: buildCeremonySummary(ceremony, vote.ceremonyId),
+      nominacion: nomination
+        ? {
+            id: nomination._id,
+            categoria: categorySummary,
+            pelicula: nomination.pelicula || null,
+            profesional: nomination.profesional || null,
+            esGanador: nomination.esGanador
+          }
+        : {
+            id: vote.nominacionId,
+            categoria: categorySummary
+          }
+    };
+  });
 }
 
 async function getVoteCounts({ idCeremonia, idCategoria }) {
-  const [counts, ceremony] = await Promise.all([
+  const [counts, totalVotosCeremonia, ceremony] = await Promise.all([
     voteRepository.countsByCeremony({ ceremonyId: idCeremonia, categoryId: idCategoria }),
+    voteRepository.countTotalByCeremony(idCeremonia),
     ceremonyRepository.findById(idCeremonia)
   ]);
 
@@ -132,35 +185,23 @@ async function getVoteCounts({ idCeremonia, idCategoria }) {
     throw new HttpError(404, "Ceremonia no encontrada.");
   }
 
-  const ceremonySummary = {
-    id: ceremony._id,
-    anio: ceremony.anio,
-    fecha: ceremony.fecha,
-    lugar: ceremony.lugar,
-    estado: ceremony.estado
-  };
+  const ceremonySummary = buildCeremonySummary(ceremony, idCeremonia);
 
   const categories = await Promise.all(
     counts.map((count) => categoryRepository.findById(count.categoryId))
   );
 
-  return counts.map((count, index) => {
+  const resultados = counts.map((count, index) => {
     const nomination = ceremony.nominaciones.id(count.nominacionId);
     const category = categories[index];
-    const categorySummary = category
-      ? {
-          id: category._id,
-          nombre: category.nombre,
-          descripcion: category.descripcion
-        }
-      : nomination?.categoria || {
-          id: count.categoryId
-        };
+    const categorySummary = buildCategorySummary(
+      category,
+      nomination?.categoria,
+      count.categoryId
+    );
 
     return {
       votos: count.votos,
-      ceremonia: ceremonySummary,
-      categoria: categorySummary,
       nominacion: nomination
         ? {
             id: nomination._id,
@@ -174,10 +215,23 @@ async function getVoteCounts({ idCeremonia, idCategoria }) {
           }
     };
   });
+
+  const totalVotosResultado = resultados.reduce((total, resultado) => total + resultado.votos, 0);
+
+  return {
+    ceremonia: ceremonySummary,
+    resumen: {
+      totalVotosCeremonia,
+      totalVotosResultado,
+      totalNominacionesConVotos: resultados.length,
+      filtroCategoriaId: idCategoria || null
+    },
+    resultados
+  };
 }
 
 module.exports = {
   castVote,
-  getMyVote,
+  getMyVotes,
   getVoteCounts
 };
