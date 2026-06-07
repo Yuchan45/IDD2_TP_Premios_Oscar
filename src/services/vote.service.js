@@ -1,6 +1,7 @@
 const voteRepository = require("../repositories/vote.repository");
 const auditRepository = require("../repositories/audit.repository");
 const ceremonyRepository = require("../repositories/ceremony.repository");
+const categoryRepository = require("../repositories/category.repository");
 const { getRedisClient } = require("../config/db/redis");
 const HttpError = require("../utils/httpError");
 
@@ -66,11 +67,113 @@ async function castVote({ idUsuario, idCeremonia, nominacionId }) {
 }
 
 async function getMyVote({ idUsuario, idCeremonia, idCategoria }) {
-  return voteRepository.findByUser({ userId: idUsuario, ceremonyId: idCeremonia, categoryId: idCategoria });
+  const vote = await voteRepository.findByUser({
+    userId: idUsuario,
+    ceremonyId: idCeremonia,
+    categoryId: idCategoria
+  });
+
+  if (!vote) {
+    return null;
+  }
+
+  const ceremony = await ceremonyRepository.findById(vote.ceremonyId);
+  const nomination = ceremony?.nominaciones.id(vote.nominacionId);
+  const categoryId = nomination?.categoria?.id || vote.categoryId;
+  const category = categoryId ? await categoryRepository.findById(categoryId) : null;
+
+  return {
+    nominacion: nomination
+      ? {
+          id: nomination._id,
+          pelicula: nomination.pelicula,
+          profesional: nomination.profesional,
+          esGanador: nomination.esGanador
+        }
+      : {
+          id: vote.nominacionId
+        },
+    voto: {
+      id: vote._id,
+      userId: vote.userId,
+      createdAt: vote.createdAt,
+      updatedAt: vote.updatedAt
+    },
+    ceremonia: ceremony
+      ? {
+          id: ceremony._id,
+          anio: ceremony.anio,
+          fecha: ceremony.fecha,
+          lugar: ceremony.lugar,
+          estado: ceremony.estado
+        }
+      : {
+          id: vote.ceremonyId
+        },
+    categoria: category
+      ? {
+          id: category._id,
+          nombre: category.nombre,
+          descripcion: category.descripcion
+        }
+      : nomination?.categoria || {
+          id: vote.categoryId
+        },
+  };
 }
 
 async function getVoteCounts({ idCeremonia, idCategoria }) {
-  return voteRepository.countsByCeremony({ ceremonyId: idCeremonia, categoryId: idCategoria });
+  const [counts, ceremony] = await Promise.all([
+    voteRepository.countsByCeremony({ ceremonyId: idCeremonia, categoryId: idCategoria }),
+    ceremonyRepository.findById(idCeremonia)
+  ]);
+
+  if (!ceremony) {
+    throw new HttpError(404, "Ceremonia no encontrada.");
+  }
+
+  const ceremonySummary = {
+    id: ceremony._id,
+    anio: ceremony.anio,
+    fecha: ceremony.fecha,
+    lugar: ceremony.lugar,
+    estado: ceremony.estado
+  };
+
+  const categories = await Promise.all(
+    counts.map((count) => categoryRepository.findById(count.categoryId))
+  );
+
+  return counts.map((count, index) => {
+    const nomination = ceremony.nominaciones.id(count.nominacionId);
+    const category = categories[index];
+    const categorySummary = category
+      ? {
+          id: category._id,
+          nombre: category.nombre,
+          descripcion: category.descripcion
+        }
+      : nomination?.categoria || {
+          id: count.categoryId
+        };
+
+    return {
+      votos: count.votos,
+      ceremonia: ceremonySummary,
+      categoria: categorySummary,
+      nominacion: nomination
+        ? {
+            id: nomination._id,
+            categoria: categorySummary,
+            pelicula: nomination.pelicula,
+            profesional: nomination.profesional,
+            esGanador: nomination.esGanador
+          }
+        : {
+            id: count.nominacionId
+          }
+    };
+  });
 }
 
 module.exports = {
