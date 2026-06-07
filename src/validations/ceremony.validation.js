@@ -195,6 +195,7 @@ const updateCeremonyValidation = checkExact([
 const listNominacionesValidation = [
   param("id").isMongoId(),
   query("categoriaId").optional().isMongoId(),
+  query("esGanador").optional().isBoolean().toBoolean(),
 ];
 
 const nominacionIdValidation = [
