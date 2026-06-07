@@ -8,6 +8,7 @@ const LOCK_TTL = 5; // segundos
 
 async function castVote({ idUsuario, idCeremonia, nominacionId }) {
   const redis = getRedisClient();
+  // CHECK: Validar que un mismo usuario no pueda votar mas de una vez.
   const isClosed = await redis.exists(`ceremony:closed:${idCeremonia}`);
   if (isClosed) {
     throw new HttpError(409, "Las votaciones de esta ceremonia ya estan cerradas.");
@@ -28,6 +29,7 @@ async function castVote({ idUsuario, idCeremonia, nominacionId }) {
 
   const categoryId = nominacion.categoria.id.toString();
 
+  // Validacion de concurrencia: Evitar doble voto
   const lockKey = `lock:vote:${idUsuario}:${categoryId}:${idCeremonia}`;
   const acquired = await redis.set(lockKey, "1", { NX: true, EX: LOCK_TTL });
 
