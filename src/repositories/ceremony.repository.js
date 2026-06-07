@@ -9,6 +9,10 @@ function findById(id) {
   return Ceremony.findById(id);
 }
 
+function findByNominationId(nominacionId) {
+  return Ceremony.findOne({ "nominaciones._id": nominacionId });
+}
+
 function create(data) {
   return Ceremony.create(data);
 }
@@ -24,7 +28,21 @@ function remove(id) {
   return Ceremony.findByIdAndDelete(id);
 }
 
-async function findNominaciones(id, { categoriaId } = {}) {
+async function findNominaciones(id, { categoriaId, esGanador } = {}) {
+  const nominationFilters = [];
+
+  if (categoriaId) {
+    nominationFilters.push({
+      $eq: ["$$nom.categoria.id", new mongoose.Types.ObjectId(categoriaId)]
+    });
+  }
+
+  if (typeof esGanador === "boolean") {
+    nominationFilters.push({
+      $eq: ["$$nom.esGanador", esGanador]
+    });
+  }
+
   const pipeline = [
     { $match: { _id: new mongoose.Types.ObjectId(id) } },
     {
@@ -34,9 +52,7 @@ async function findNominaciones(id, { categoriaId } = {}) {
           $filter: {
             input: "$nominaciones",
             as: "nom",
-            cond: categoriaId
-              ? { $eq: ["$$nom.categoria.id", new mongoose.Types.ObjectId(categoriaId)] }
-              : true
+            cond: nominationFilters.length ? { $and: nominationFilters } : true
           }
         }
       }
@@ -50,6 +66,7 @@ async function findNominaciones(id, { categoriaId } = {}) {
 module.exports = {
   findAll,
   findById,
+  findByNominationId,
   create,
   update,
   remove,

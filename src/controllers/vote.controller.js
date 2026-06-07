@@ -11,8 +11,8 @@ const cast = asyncHandler(async (req, res) => {
 const myVote = asyncHandler(async (req, res) => {
   const { idCeremonia, idCategoria } = req.query;
   const idUsuario = req.user.id;
-  const data = await voteService.getMyVote({ idUsuario, idCeremonia, idCategoria });
-  res.json({ data: data || null });
+  const data = await voteService.getMyVotes({ idUsuario, idCeremonia, idCategoria });
+  res.json({ data });
 });
 
 const counts = asyncHandler(async (req, res) => {
@@ -21,4 +21,18 @@ const counts = asyncHandler(async (req, res) => {
   res.json({ data });
 });
 
-module.exports = { cast, myVote, counts };
+const myStatus = asyncHandler(async (req, res) => {
+  const idUsuario = req.user.id;
+  const { idCeremonia } = req.query;
+  const data = await voteService.getMyCeremonyVoteStatus({ idUsuario, idCeremonia });
+  res.json({ data });
+});
+
+const nominationStatus = asyncHandler(async (req, res) => {
+  const idUsuario = req.user.id;
+  const { nominacionId } = req.params;
+  const data = await voteService.getNominationVoteStatus({ idUsuario, nominacionId });
+  res.json({ data });
+});
+
+module.exports = { cast, myVote, counts, myStatus, nominationStatus };
