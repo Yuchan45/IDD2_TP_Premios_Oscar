@@ -13,6 +13,7 @@ if (fs.existsSync(envPath)) {
 const env = {
   nodeEnv: process.env.NODE_ENV || "development",
   port: Number(process.env.PORT || 3000),
+  logLevel: process.env.LOG_LEVEL || "info",
   mongoUri: process.env.MONGO_URI || "mongodb://127.0.0.1:27018/premios_oscar",
   redisUrl: process.env.REDIS_URL || "redis://127.0.0.1:6379",
   sql: {
