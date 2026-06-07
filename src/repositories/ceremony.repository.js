@@ -9,6 +9,10 @@ function findById(id) {
   return Ceremony.findById(id);
 }
 
+function findByNominationId(nominacionId) {
+  return Ceremony.findOne({ "nominaciones._id": nominacionId });
+}
+
 function create(data) {
   return Ceremony.create(data);
 }
@@ -62,6 +66,7 @@ async function findNominaciones(id, { categoriaId, esGanador } = {}) {
 module.exports = {
   findAll,
   findById,
+  findByNominationId,
   create,
   update,
   remove,

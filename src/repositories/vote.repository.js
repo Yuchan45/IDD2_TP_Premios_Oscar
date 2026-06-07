@@ -49,9 +49,19 @@ function countTotalByCeremony(ceremonyId) {
   return Vote.countDocuments({ ceremonyId });
 }
 
+function countByNomination({ ceremonyId, nominacionId }) {
+  return Vote.countDocuments({ ceremonyId, nominacionId });
+}
+
+function findUserVoteByCategory({ userId, ceremonyId, categoryId }) {
+  return Vote.findOne({ userId, ceremonyId, categoryId });
+}
+
 module.exports = {
   create,
   findAllByUser,
   countsByCeremony,
   countTotalByCeremony,
+  countByNomination,
+  findUserVoteByCategory,
 };

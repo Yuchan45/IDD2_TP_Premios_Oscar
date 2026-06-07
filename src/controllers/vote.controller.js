@@ -21,4 +21,18 @@ const counts = asyncHandler(async (req, res) => {
   res.json({ data });
 });
 
-module.exports = { cast, myVote, counts };
+const myStatus = asyncHandler(async (req, res) => {
+  const idUsuario = req.user.id;
+  const { idCeremonia } = req.query;
+  const data = await voteService.getMyCeremonyVoteStatus({ idUsuario, idCeremonia });
+  res.json({ data });
+});
+
+const nominationStatus = asyncHandler(async (req, res) => {
+  const idUsuario = req.user.id;
+  const { nominacionId } = req.params;
+  const data = await voteService.getNominationVoteStatus({ idUsuario, nominacionId });
+  res.json({ data });
+});
+
+module.exports = { cast, myVote, counts, myStatus, nominationStatus };

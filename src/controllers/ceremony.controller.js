@@ -36,6 +36,16 @@ const listNominaciones = asyncHandler(async (req, res) => {
   res.json({ data });
 });
 
+const results = asyncHandler(async (req, res) => {
+  const data = await ceremonyService.getResults(req.params.id);
+  res.json({ data });
+});
+
+const leaderboard = asyncHandler(async (req, res) => {
+  const data = await ceremonyService.getCategoryLeaderboard(req.params.id, req.params.categoryId);
+  res.json({ data });
+});
+
 const addNominacion = asyncHandler(async (req, res) => {
   const data = await ceremonyService.addNominacion(req.params.id, req.body);
   res.status(201).json({ data });
@@ -59,6 +69,8 @@ module.exports = {
   remove,
   close,
   listNominaciones,
+  results,
+  leaderboard,
   addNominacion,
   updateNominacion,
   removeNominacion
