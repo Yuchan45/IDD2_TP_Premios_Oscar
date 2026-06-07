@@ -1,4 +1,4 @@
-const { body, query } = require("express-validator");
+const { body, param, query } = require("express-validator");
 
 const castVoteValidation = [
   body("idCeremonia").isMongoId(),
@@ -10,7 +10,23 @@ const voteQueryValidation = [
   query("idCategoria").optional().isMongoId()
 ];
 
+const myVotesQueryValidation = [
+  query("idCeremonia").optional().isMongoId(),
+  query("idCategoria").optional().isMongoId()
+];
+
+const myVoteStatusValidation = [
+  query("idCeremonia").isMongoId()
+];
+
+const nominationVoteStatusValidation = [
+  param("nominacionId").isMongoId()
+];
+
 module.exports = {
   castVoteValidation,
+  myVoteStatusValidation,
+  myVotesQueryValidation,
+  nominationVoteStatusValidation,
   voteQueryValidation
 };

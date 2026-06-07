@@ -111,13 +111,13 @@ async function seedCeremonies() {
         $set: {
           fecha: ceremony.fecha,
           lugar: ceremony.lugar,
-          estado: ceremony.estado,
+          estado: ceremony.estado
+        },
+        $setOnInsert: {
+          anio: ceremony.anio,
           actuaciones: [],
           nominaciones: nominations,
           premios: []
-        },
-        $setOnInsert: {
-          anio: ceremony.anio
         }
       },
       upsert: true

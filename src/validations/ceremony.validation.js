@@ -195,6 +195,12 @@ const updateCeremonyValidation = checkExact([
 const listNominacionesValidation = [
   param("id").isMongoId(),
   query("categoriaId").optional().isMongoId(),
+  query("esGanador").optional().isBoolean().toBoolean(),
+];
+
+const ceremonyCategoryValidation = [
+  param("id").isMongoId(),
+  param("categoryId").isMongoId(),
 ];
 
 const nominacionIdValidation = [
@@ -235,6 +241,7 @@ const updateNominacionValidation = checkExact([
 
 module.exports = {
   ceremonyIdValidation,
+  ceremonyCategoryValidation,
   createCeremonyValidation,
   updateCeremonyValidation,
   listNominacionesValidation,
