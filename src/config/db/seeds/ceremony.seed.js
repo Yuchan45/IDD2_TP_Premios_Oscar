@@ -1,4 +1,6 @@
-const { Category, Ceremony, Movie, Professional } = require("../../../models");
+const crypto = require("crypto");
+const mongoose = require("mongoose");
+const { Category, Ceremony, Movie, Professional, Vote } = require("../../../models");
 
 const BASE_CEREMONIES = [
   {
@@ -80,7 +82,33 @@ async function seedCeremonies() {
     ])
   );
 
-  function buildNominations(definitions) {
+  function nominationSignature(definition) {
+    if (definition.pelicula) {
+      return `${definition.categoria}::pelicula::${definition.pelicula}`;
+    }
+
+    return `${definition.categoria}::profesional::${definition.profesional}`;
+  }
+
+  function nominationObjectId(anio, definition) {
+    const hex = crypto
+      .createHash("md5")
+      .update(`${anio}::${nominationSignature(definition)}`)
+      .digest("hex")
+      .slice(0, 24);
+
+    return new mongoose.Types.ObjectId(hex);
+  }
+
+  function snapshotSignature(nomination) {
+    if (nomination.pelicula?.titulo) {
+      return `${nomination.categoria.nombre}::pelicula::${nomination.pelicula.titulo}`;
+    }
+
+    return `${nomination.categoria.nombre}::profesional::${nomination.profesional?.nombreCompleto || ""}`;
+  }
+
+  function buildNominations(anio, definitions) {
     return definitions.map((definition) => {
       const category = categoryByName.get(definition.categoria);
       if (!category) {
@@ -88,6 +116,7 @@ async function seedCeremonies() {
       }
 
       const nomination = {
+        _id: nominationObjectId(anio, definition),
         categoria: {
           id: category._id,
           nombre: category.nombre
@@ -125,8 +154,11 @@ async function seedCeremonies() {
     }).filter(Boolean);
   }
 
+  const existingCeremonies = await Ceremony.find({ anio: { $in: BASE_CEREMONIES.map((ceremony) => ceremony.anio) } });
+  const existingCeremonyByYear = new Map(existingCeremonies.map((ceremony) => [ceremony.anio, ceremony]));
+
   const operations = BASE_CEREMONIES.map((ceremony) => {
-    const nominations = buildNominations(NOMINATION_DEFINITIONS_BY_YEAR[ceremony.anio] || []);
+    const nominations = buildNominations(ceremony.anio, NOMINATION_DEFINITIONS_BY_YEAR[ceremony.anio] || []);
 
     return {
       updateOne: {
@@ -155,6 +187,46 @@ async function seedCeremonies() {
 
   const yearsToKeep = BASE_CEREMONIES.map((ceremony) => ceremony.anio);
   const deleteResult = await Ceremony.deleteMany({ anio: { $in: [2020, 2021, 2022] } });
+
+  for (const ceremony of BASE_CEREMONIES) {
+    const existingCeremony = existingCeremonyByYear.get(ceremony.anio);
+    if (!existingCeremony) {
+      continue;
+    }
+
+    const nextNominations = buildNominations(
+      ceremony.anio,
+      NOMINATION_DEFINITIONS_BY_YEAR[ceremony.anio] || []
+    );
+    const nextNominationBySignature = new Map(
+      nextNominations.map((nomination) => [snapshotSignature(nomination), nomination])
+    );
+
+    for (const previousNomination of existingCeremony.nominaciones) {
+      const signature = snapshotSignature(previousNomination);
+      const nextNomination = nextNominationBySignature.get(signature);
+
+      if (nextNomination) {
+        if (String(previousNomination._id) !== String(nextNomination._id)) {
+          await Vote.updateMany(
+            { ceremonyId: existingCeremony._id, nominacionId: previousNomination._id },
+            {
+              $set: {
+                nominacionId: nextNomination._id,
+                categoryId: nextNomination.categoria.id
+              }
+            }
+          );
+        }
+      } else {
+        await Vote.deleteMany({
+          ceremonyId: existingCeremony._id,
+          nominacionId: previousNomination._id
+        });
+      }
+    }
+  }
+
   const result = await Ceremony.bulkWrite(operations, { ordered: false });
 
   return {
