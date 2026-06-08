@@ -30,6 +30,66 @@ const BASE_PROFESSIONALS = [
     apellido: "Robbie",
     nacionalidad: "Australiana",
     roles: [{ nombre: "Actor Principal" }, { nombre: "Productor" }]
+  },
+  {
+    nombre: "Robert",
+    apellido: "Downey Jr",
+    nacionalidad: "Estadounidense",
+    roles: [{ nombre: "Actor Principal" }, { nombre: "Actor Secundario" }]
+  },
+  {
+    nombre: "Mark",
+    apellido: "Ruffalo",
+    nacionalidad: "Estadounidense",
+    roles: [{ nombre: "Actor Principal" }, { nombre: "Actor Secundario" }]
+  },
+  {
+    nombre: "Jennifer",
+    apellido: "Aniston",
+    nacionalidad: "Estadounidense",
+    roles: [{ nombre: "Actor Principal" }]
+  },
+  {
+    nombre: "Courteney",
+    apellido: "Cox",
+    nacionalidad: "Estadounidense",
+    roles: [{ nombre: "Actor Principal" }]
+  },
+  {
+    nombre: "Lisa",
+    apellido: "Kudrow",
+    nacionalidad: "Estadounidense",
+    roles: [{ nombre: "Actor Principal" }]
+  },
+  {
+    nombre: "Matt",
+    apellido: "LeBlanc",
+    nacionalidad: "Estadounidense",
+    roles: [{ nombre: "Actor Principal" }]
+  },
+  {
+    nombre: "Matthew",
+    apellido: "Perry",
+    nacionalidad: "Canadiense-Estadounidense",
+    roles: [{ nombre: "Actor Principal" }]
+  },
+  {
+    nombre: "David",
+    apellido: "Schwimmer",
+    nacionalidad: "Estadounidense",
+    roles: [{ nombre: "Actor Principal" }]
+  },
+  {
+    nombre: "Matt",
+    apellido: "Damon",
+    nacionalidad: "Estadounidense",
+    roles: [{ nombre: "Actor Principal" }, { nombre: "Productor" }]
+  },
+  {
+    nombre: "Emily",
+    apellido: "Blunt",
+    nacionalidad: "Britanica",
+    roles: [{ nombre: "Actor Principal" }, { nombre: "Actor Secundario" }]
   }
 ];
 

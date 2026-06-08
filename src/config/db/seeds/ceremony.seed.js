@@ -2,32 +2,20 @@ const { Category, Ceremony, Movie, Professional } = require("../../../models");
 
 const BASE_CEREMONIES = [
   {
+    anio: 2025,
+    fecha: new Date("2025-03-02T00:00:00.000Z"),
+    lugar: "Teatro Colon, Buenos Aires",
+    estado: "abierta"
+  },
+  {
     anio: 2024,
     fecha: new Date("2024-03-10T00:00:00.000Z"),
-    lugar: "Dolby Theatre, Los Angeles",
+    lugar: "Tokyo Dome, Tokyo",
     estado: "abierta"
   },
   {
     anio: 2023,
     fecha: new Date("2023-03-12T00:00:00.000Z"),
-    lugar: "Dolby Theatre, Los Angeles",
-    estado: "abierta"
-  },
-  {
-    anio: 2022,
-    fecha: new Date("2022-03-27T00:00:00.000Z"),
-    lugar: "Union Station, Los Angeles",
-    estado: "abierta"
-  },
-  {
-    anio: 2021,
-    fecha: new Date("2021-04-25T00:00:00.000Z"),
-    lugar: "Teatro Colon, Buenos Aires",
-    estado: "abierta"
-  },
-  {
-    anio: 2020,
-    fecha: new Date("2020-02-09T00:00:00.000Z"),
     lugar: "Dolby Theatre, Los Angeles",
     estado: "abierta"
   }
@@ -128,11 +116,15 @@ async function seedCeremonies() {
     return { processed: 0, nominations: nominations.length };
   }
 
+  const yearsToKeep = BASE_CEREMONIES.map((ceremony) => ceremony.anio);
+  const deleteResult = await Ceremony.deleteMany({ anio: { $in: [2020, 2021, 2022] } });
   const result = await Ceremony.bulkWrite(operations, { ordered: false });
 
   return {
     processed: operations.length,
+    activeYears: yearsToKeep,
     nominations: nominations.length,
+    deletedLegacy: deleteResult.deletedCount || 0,
     inserted: result.upsertedCount || 0,
     modified: result.modifiedCount || 0,
     matched: result.matchedCount || 0
