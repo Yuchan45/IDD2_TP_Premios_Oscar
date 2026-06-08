@@ -16,6 +16,12 @@ const env = {
   logLevel: process.env.LOG_LEVEL || "info",
   mongoUri: process.env.MONGO_URI || "mongodb://127.0.0.1:27018/premios_oscar",
   redisUrl: process.env.REDIS_URL || "redis://127.0.0.1:6379",
+  cassandra: {
+    host: process.env.CASSANDRA_HOST || "127.0.0.1",
+    port: Number(process.env.CASSANDRA_PORT || 9042),
+    keyspace: process.env.CASSANDRA_KEYSPACE || "premios_oscar",
+    localDataCenter: process.env.CASSANDRA_DATACENTER || "datacenter1"
+  },
   sql: {
     host: process.env.SQL_SERVER_HOST || "127.0.0.1",
     port: Number(process.env.SQL_SERVER_PORT || 1433),

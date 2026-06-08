@@ -2,6 +2,7 @@ const ceremonyRepository = require("../repositories/ceremony.repository");
 const voteRepository = require("../repositories/vote.repository");
 const categoryRepository = require("../repositories/category.repository");
 const { getRedisClient } = require("../config/db/redis");
+const { rebuildHistoricalProjections } = require("./history-projection.service");
 const HttpError = require("../utils/httpError");
 
 function findAll(filters) {
@@ -96,6 +97,12 @@ async function close(id) {
   if (ceremony.estado === "cerrada")
     throw new HttpError(409, "La ceremonia ya esta cerrada.");
 
+  const originalState = ceremony.estado;
+  const originalPremios = ceremony.premios.map((premio) => premio.toObject());
+  const originalWinnerMap = new Map(
+    ceremony.nominaciones.map((nomination) => [nomination._id.toString(), nomination.esGanador])
+  );
+
   const voteCounts = await voteRepository.countsByCeremony({ ceremonyId: id });
 
   // Por cada categoría, quedarse con la nominación que tenga más votos
@@ -126,9 +133,25 @@ async function close(id) {
   ceremony.estado = "cerrada";
   const saved = await ceremony.save();
 
-  await getRedisClient().set(`ceremony:closed:${id}`, "1");
+  try {
+    await rebuildHistoricalProjections();
+    await getRedisClient().set(`ceremony:closed:${id}`, "1");
+    return saved;
+  } catch (error) {
+    saved.estado = originalState;
+    saved.premios = originalPremios;
 
-  return saved;
+    for (const nomination of saved.nominaciones) {
+      nomination.esGanador = originalWinnerMap.get(nomination._id.toString()) || false;
+    }
+
+    await saved.save();
+    throw new HttpError(
+      503,
+      "No se pudo sincronizar la ceremonia cerrada en Cassandra. Se revirtio el cierre.",
+      error.message
+    );
+  }
 }
 
 async function findNominaciones(id, filters) {

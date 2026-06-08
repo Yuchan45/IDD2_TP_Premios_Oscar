@@ -10,5 +10,6 @@ router.use("/professionals", require("./professionals.routes"));
 router.use("/ceremonies", require("./ceremonies.routes"));
 router.use("/votes", require("./votes.routes"));
 router.use("/audit", require("./audit.routes"));
+router.use("/history", require("./history.routes"));
 
 module.exports = router;

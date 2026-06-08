@@ -9,6 +9,8 @@ SELECT
   ceremony_id,
   category_id,
   anio,
+  fecha,
+  lugar,
   category_name,
   winner_type,
   winner_name,
@@ -36,6 +38,8 @@ SELECT
   category_id,
   anio,
   ceremony_id,
+  fecha,
+  lugar,
   category_name,
   winner_type,
   winner_name,
@@ -49,13 +53,16 @@ SELECT
   ceremony_id,
   nomination_id,
   anio,
+  fecha,
+  lugar,
   category_id,
   category_name,
   nominee_type,
   nominee_name,
   movie_id,
   professional_id,
-  es_ganador
+  es_ganador,
+  votos
 FROM nominations_by_ceremony
 WHERE ceremony_id = ?;
 
@@ -100,7 +107,32 @@ LIMIT ?;
 SELECT
   professional_id,
   nombre_completo,
-  award_count
+  award_count,
+  winning_votes_total
 FROM professionals_by_award_count
+WHERE bucket = 'global'
+LIMIT ?;
+
+-- GET /api/history/ceremonies/top-voted
+SELECT
+  ceremony_id,
+  anio,
+  fecha,
+  lugar,
+  total_votes
+FROM ceremonies_by_vote_count
+WHERE bucket = 'global'
+LIMIT ?;
+
+-- GET /api/history/categories/top-participants
+SELECT
+  ceremony_id,
+  category_id,
+  anio,
+  fecha,
+  lugar,
+  category_name,
+  participant_count
+FROM categories_by_participant_count
 WHERE bucket = 'global'
 LIMIT ?;
