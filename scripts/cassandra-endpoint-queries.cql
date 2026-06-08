@@ -59,6 +59,25 @@ SELECT
 FROM nominations_by_ceremony
 WHERE ceremony_id = ?;
 
+-- GET /api/history/votes?ceremonyId=:ceremonyId&categoryId=:categoryId
+-- Devuelve el detalle de votos por nominación, ya ordenado de mayor a menor por la
+-- clustering key (votos DESC).
+SELECT
+  ceremony_id,
+  category_id,
+  votos,
+  nomination_id,
+  anio,
+  category_name,
+  nominee_type,
+  nominee_name,
+  movie_id,
+  professional_id,
+  es_ganador
+FROM vote_results_by_ceremony
+WHERE ceremony_id = ?
+  AND category_id = ?;
+
 -- GET /api/history/movies/top-awarded
 SELECT
   movie_id,
