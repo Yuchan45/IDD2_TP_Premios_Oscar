@@ -57,6 +57,10 @@ function sortByVotesDesc(left, right) {
   return String(left.nominacion.id).localeCompare(String(right.nominacion.id));
 }
 
+function nominationLabel(nomination) {
+  return nomination.pelicula?.titulo || nomination.profesional?.nombreCompleto || "-";
+}
+
 async function findById(id) {
   const ceremony = await ceremonyRepository.findById(id);
   if (!ceremony) {
@@ -106,6 +110,63 @@ async function close(id) {
   const voteCounts = await voteRepository.countsByCeremony({ ceremonyId: id });
 
   // Por cada categoría, quedarse con la nominación que tenga más votos
+  const countsByCategory = new Map();
+
+  for (const count of voteCounts) {
+    const categoryId = count.categoryId.toString();
+    const categoryCounts = countsByCategory.get(categoryId) || [];
+    categoryCounts.push(count);
+    countsByCategory.set(categoryId, categoryCounts);
+  }
+
+  const tiedCategories = [];
+  for (const [categoryId, categoryCounts] of countsByCategory.entries()) {
+    const highestVotes = Math.max(...categoryCounts.map((count) => count.votos), 0);
+    if (highestVotes <= 0) {
+      continue;
+    }
+
+    const leaders = categoryCounts.filter((count) => count.votos === highestVotes);
+    if (leaders.length <= 1) {
+      continue;
+    }
+
+    const nomination = ceremony.nominaciones.find(
+      (item) => item.categoria.id.toString() === categoryId
+    );
+
+    tiedCategories.push({
+      categoryId,
+      categoryName: nomination?.categoria.nombre || "Categoria",
+      votes: highestVotes,
+      nominations: leaders
+        .map((leader) => {
+          const currentNomination = ceremony.nominaciones.id(leader.nominacionId);
+          if (!currentNomination) {
+            return null;
+          }
+
+          return {
+            id: currentNomination._id.toString(),
+            label: nominationLabel(currentNomination),
+            tipo: currentNomination.pelicula ? "pelicula" : "profesional"
+          };
+        })
+        .filter(Boolean)
+    });
+  }
+
+  if (tiedCategories.length) {
+    throw new HttpError(
+      409,
+      "No se puede cerrar la ceremonia porque hay categorias empatadas.",
+      {
+        blockedByTie: true,
+        categories: tiedCategories
+      }
+    );
+  }
+
   const winnerByCategory = {};
   for (const { nominacionId, votos } of voteCounts) {
     const nom = ceremony.nominaciones.id(nominacionId);
