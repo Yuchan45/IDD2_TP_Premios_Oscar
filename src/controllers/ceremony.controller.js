@@ -36,6 +36,11 @@ const listNominaciones = asyncHandler(async (req, res) => {
   res.json({ data });
 });
 
+const listActuaciones = asyncHandler(async (req, res) => {
+  const data = await ceremonyService.findActuaciones(req.params.id);
+  res.json({ data });
+});
+
 const results = asyncHandler(async (req, res) => {
   const data = await ceremonyService.getResults(req.params.id);
   res.json({ data });
@@ -61,6 +66,21 @@ const removeNominacion = asyncHandler(async (req, res) => {
   res.json({ data });
 });
 
+const addActuacion = asyncHandler(async (req, res) => {
+  const data = await ceremonyService.addActuacion(req.params.id, req.body);
+  res.status(201).json({ data });
+});
+
+const updateActuacion = asyncHandler(async (req, res) => {
+  const data = await ceremonyService.updateActuacion(req.params.id, req.params.actuacionId, req.body);
+  res.json({ data });
+});
+
+const removeActuacion = asyncHandler(async (req, res) => {
+  const data = await ceremonyService.removeActuacion(req.params.id, req.params.actuacionId);
+  res.json({ data });
+});
+
 module.exports = {
   list,
   get,
@@ -69,9 +89,13 @@ module.exports = {
   remove,
   close,
   listNominaciones,
+  listActuaciones,
   results,
   leaderboard,
   addNominacion,
   updateNominacion,
-  removeNominacion
+  removeNominacion,
+  addActuacion,
+  updateActuacion,
+  removeActuacion
 };

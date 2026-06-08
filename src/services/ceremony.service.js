@@ -64,6 +64,12 @@ async function findById(id) {
   return ceremony;
 }
 
+function assertCeremonyIsOpen(ceremony) {
+  if (ceremony.estado === "cerrada") {
+    throw new HttpError(409, "La ceremonia ya esta cerrada.");
+  }
+}
+
 function create(data) {
   return ceremonyRepository.create(data);
 }
@@ -129,6 +135,12 @@ async function findNominaciones(id, filters) {
   const ceremony = await ceremonyRepository.findById(id);
   if (!ceremony) throw new HttpError(404, "Ceremonia no encontrada.");
   return ceremonyRepository.findNominaciones(id, filters);
+}
+
+async function findActuaciones(id) {
+  const ceremony = await ceremonyRepository.findById(id);
+  if (!ceremony) throw new HttpError(404, "Ceremonia no encontrada.");
+  return ceremony.actuaciones;
 }
 
 async function getCategoryLeaderboard(id, categoryId) {
@@ -273,8 +285,7 @@ async function getResults(id) {
 async function addNominacion(id, data) {
   const ceremony = await ceremonyRepository.findById(id);
   if (!ceremony) throw new HttpError(404, "Ceremonia no encontrada.");
-  if (ceremony.estado === "cerrada")
-    throw new HttpError(409, "La ceremonia ya esta cerrada.");
+  assertCeremonyIsOpen(ceremony);
   const { esGanador: _, ...safeData } = data;
   ceremony.nominaciones.push(safeData);
   return ceremony.save();
@@ -283,8 +294,7 @@ async function addNominacion(id, data) {
 async function updateNominacion(id, nomId, data) {
   const ceremony = await ceremonyRepository.findById(id);
   if (!ceremony) throw new HttpError(404, "Ceremonia no encontrada.");
-  if (ceremony.estado === "cerrada")
-    throw new HttpError(409, "La ceremonia ya esta cerrada.");
+  assertCeremonyIsOpen(ceremony);
   const nom = ceremony.nominaciones.id(nomId);
   if (!nom) throw new HttpError(404, "Nominacion no encontrada.");
   const { esGanador: _, ...safeData } = data;
@@ -295,11 +305,42 @@ async function updateNominacion(id, nomId, data) {
 async function removeNominacion(id, nomId) {
   const ceremony = await ceremonyRepository.findById(id);
   if (!ceremony) throw new HttpError(404, "Ceremonia no encontrada.");
-  if (ceremony.estado === "cerrada")
-    throw new HttpError(409, "La ceremonia ya esta cerrada.");
+  assertCeremonyIsOpen(ceremony);
   const nom = ceremony.nominaciones.id(nomId);
   if (!nom) throw new HttpError(404, "Nominacion no encontrada.");
   nom.deleteOne();
+  return ceremony.save();
+}
+
+async function addActuacion(id, data) {
+  const ceremony = await ceremonyRepository.findById(id);
+  if (!ceremony) throw new HttpError(404, "Ceremonia no encontrada.");
+  assertCeremonyIsOpen(ceremony);
+  ceremony.actuaciones.push(data);
+  return ceremony.save();
+}
+
+async function updateActuacion(id, actuacionId, data) {
+  const ceremony = await ceremonyRepository.findById(id);
+  if (!ceremony) throw new HttpError(404, "Ceremonia no encontrada.");
+  assertCeremonyIsOpen(ceremony);
+
+  const actuacion = ceremony.actuaciones.id(actuacionId);
+  if (!actuacion) throw new HttpError(404, "Actuacion no encontrada.");
+
+  actuacion.set(data);
+  return ceremony.save();
+}
+
+async function removeActuacion(id, actuacionId) {
+  const ceremony = await ceremonyRepository.findById(id);
+  if (!ceremony) throw new HttpError(404, "Ceremonia no encontrada.");
+  assertCeremonyIsOpen(ceremony);
+
+  const actuacion = ceremony.actuaciones.id(actuacionId);
+  if (!actuacion) throw new HttpError(404, "Actuacion no encontrada.");
+
+  actuacion.deleteOne();
   return ceremony.save();
 }
 
@@ -311,9 +352,13 @@ module.exports = {
   remove,
   close,
   findNominaciones,
+  findActuaciones,
   getCategoryLeaderboard,
   getResults,
   addNominacion,
   updateNominacion,
   removeNominacion,
+  addActuacion,
+  updateActuacion,
+  removeActuacion,
 };

@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 
-const ARTIST_TYPES = ["Cantante", "Banda", "Orquesta"];
+const ARTIST_TYPES = ["Cantante", "Solista", "Banda", "Orquesta", "Actor/Cantante", "Coro"];
+const PERFORMANCE_TYPES = ["Musical", "Cancion nominada", "Homenaje", "Apertura", "Intermedio", "Cierre"];
 const WINNER_TYPES = ["pelicula", "profesional"];
 
 const categorySnapshotSchema = new mongoose.Schema(
@@ -70,10 +71,15 @@ const artistSchema = new mongoose.Schema(
 
 const performanceSchema = new mongoose.Schema(
   {
+    _id: {
+      type: String,
+      default: () => new mongoose.Types.ObjectId().toString(),
+    },
     tipoActuacion: {
       type: String,
       required: true,
       trim: true,
+      enum: PERFORMANCE_TYPES,
     },
     artistas: {
       type: [artistSchema],

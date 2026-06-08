@@ -1,6 +1,7 @@
 const { body, checkExact, param, query } = require("express-validator");
 
-const validArtistTypes = ["Cantante", "Banda", "Orquesta"];
+const validArtistTypes = ["Cantante", "Solista", "Banda", "Orquesta", "Actor/Cantante", "Coro"];
+const validPerformanceTypes = ["Musical", "Cancion nominada", "Homenaje", "Apertura", "Intermedio", "Cierre"];
 const validWinnerTypes = ["pelicula", "profesional"];
 
 function exactlyOneNominationTarget(value, { req, path }) {
@@ -68,7 +69,11 @@ const ceremonyPayloadValidation = [
   body("fecha").optional().isISO8601(),
   body("lugar").optional().isString().trim().notEmpty(),
   body("actuaciones").optional().isArray(),
-  body("actuaciones.*.tipoActuacion").optional().isString().trim().notEmpty(),
+  body("actuaciones.*.tipoActuacion")
+    .optional()
+    .isString()
+    .trim()
+    .isIn(validPerformanceTypes),
   body("actuaciones.*.artistas").optional().isArray(),
   body("actuaciones.*.artistas.*.nombre")
     .optional()
@@ -130,7 +135,11 @@ const createCeremonyValidation = checkExact([
   body("fecha").isISO8601(),
   body("lugar").isString().trim().notEmpty(),
   body("actuaciones").optional().isArray(),
-  body("actuaciones.*.tipoActuacion").optional().isString().trim().notEmpty(),
+  body("actuaciones.*.tipoActuacion")
+    .optional()
+    .isString()
+    .trim()
+    .isIn(validPerformanceTypes),
   body("actuaciones.*.artistas").optional().isArray(),
   body("actuaciones.*.artistas.*.nombre")
     .optional()
@@ -208,6 +217,11 @@ const nominacionIdValidation = [
   param("nomId").isMongoId(),
 ];
 
+const actuacionIdValidation = [
+  param("id").isMongoId(),
+  param("actuacionId").isString().trim().notEmpty(),
+];
+
 const addNominacionValidation = checkExact([
   param("id").isMongoId(),
   body("categoria.id").isMongoId(),
@@ -239,6 +253,23 @@ const updateNominacionValidation = checkExact([
   body("profesional.nombreCompleto").optional().isString().trim().notEmpty(),
 ]);
 
+const addActuacionValidation = checkExact([
+  param("id").isMongoId(),
+  body("tipoActuacion").isString().trim().isIn(validPerformanceTypes),
+  body("artistas").isArray({ min: 1 }),
+  body("artistas.*.nombre").isString().trim().notEmpty(),
+  body("artistas.*.tipo").isString().trim().isIn(validArtistTypes),
+]);
+
+const updateActuacionValidation = checkExact([
+  param("id").isMongoId(),
+  param("actuacionId").isString().trim().notEmpty(),
+  body("tipoActuacion").isString().trim().isIn(validPerformanceTypes),
+  body("artistas").isArray({ min: 1 }),
+  body("artistas.*.nombre").isString().trim().notEmpty(),
+  body("artistas.*.tipo").isString().trim().isIn(validArtistTypes),
+]);
+
 module.exports = {
   ceremonyIdValidation,
   ceremonyCategoryValidation,
@@ -246,6 +277,9 @@ module.exports = {
   updateCeremonyValidation,
   listNominacionesValidation,
   nominacionIdValidation,
+  actuacionIdValidation,
   addNominacionValidation,
   updateNominacionValidation,
+  addActuacionValidation,
+  updateActuacionValidation,
 };
