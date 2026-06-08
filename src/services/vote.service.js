@@ -142,7 +142,9 @@ async function getMyVotes({ idUsuario, idCeremonia, idCategoria }) {
     categories.filter(Boolean).map((category) => [category._id.toString(), category])
   );
 
-  return contexts.map(({ vote, ceremony, nomination, categoryId }) => {
+  return contexts
+    .filter(({ nomination }) => !!nomination)
+    .map(({ vote, ceremony, nomination, categoryId }) => {
     const category = categoryId ? categoryById.get(categoryId.toString()) : null;
     const categorySummary = buildCategorySummary(
       category,
@@ -171,13 +173,12 @@ async function getMyVotes({ idUsuario, idCeremonia, idCategoria }) {
             categoria: categorySummary
           }
     };
-  });
+    });
 }
 
 async function getVoteCounts({ idCeremonia, idCategoria }) {
-  const [counts, totalVotosCeremonia, ceremony] = await Promise.all([
+  const [counts, ceremony] = await Promise.all([
     voteRepository.countsByCeremony({ ceremonyId: idCeremonia, categoryId: idCategoria }),
-    voteRepository.countTotalByCeremony(idCeremonia),
     ceremonyRepository.findById(idCeremonia)
   ]);
 
@@ -193,6 +194,10 @@ async function getVoteCounts({ idCeremonia, idCategoria }) {
 
   const resultados = counts.map((count, index) => {
     const nomination = ceremony.nominaciones.id(count.nominacionId);
+    if (!nomination) {
+      return null;
+    }
+
     const category = categories[index];
     const categorySummary = buildCategorySummary(
       category,
@@ -212,16 +217,16 @@ async function getVoteCounts({ idCeremonia, idCategoria }) {
           }
         : {
             id: count.nominacionId
-          }
+      }
     };
-  });
+  }).filter(Boolean);
 
   const totalVotosResultado = resultados.reduce((total, resultado) => total + resultado.votos, 0);
 
   return {
     ceremonia: ceremonySummary,
     resumen: {
-      totalVotosCeremonia,
+      totalVotosCeremonia: totalVotosResultado,
       totalVotosResultado,
       totalNominacionesConVotos: resultados.length,
       filtroCategoriaId: idCategoria || null
@@ -312,8 +317,9 @@ async function getMyCeremonyVoteStatus({ idUsuario, idCeremonia }) {
     categories.filter(Boolean).map((category) => [category._id.toString(), category])
   );
 
-  const votesByCategoryId = new Map(votes.map((vote) => [vote.categoryId.toString(), vote]));
-  const votos = votes.map((vote) => {
+  const validVotes = votes.filter((vote) => ceremony.nominaciones.id(vote.nominacionId));
+  const votesByCategoryId = new Map(validVotes.map((vote) => [vote.categoryId.toString(), vote]));
+  const votos = validVotes.map((vote) => {
     const nomination = ceremony.nominaciones.id(vote.nominacionId);
     const categoryId = nomination?.categoria?.id?.toString() || vote.categoryId.toString();
     const categorySummary = buildCategorySummary(

@@ -4,7 +4,8 @@ const ROLE_NAMES = [
   "Actor Principal",
   "Actor Secundario",
   "Director",
-  "Productor"
+  "Productor",
+  "Otro"
 ];
 
 const castSchema = new mongoose.Schema(

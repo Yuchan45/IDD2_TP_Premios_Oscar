@@ -116,9 +116,25 @@ async function ensureSchema(activePool) {
       INSERT INTO dbo.usuario (id_rol, nombre, apellido, email, password_hash)
       VALUES ((SELECT id_rol FROM dbo.rol WHERE nombre = 'ACADEMY_MEMBER'), 'Miembro', 'Academia', 'miembro@oscar.com', 'asd123');
 
+    IF NOT EXISTS (SELECT 1 FROM dbo.usuario WHERE email = 'miembro2@oscar.com')
+      INSERT INTO dbo.usuario (id_rol, nombre, apellido, email, password_hash)
+      VALUES ((SELECT id_rol FROM dbo.rol WHERE nombre = 'ACADEMY_MEMBER'), 'Lucia', 'Martinez', 'miembro2@oscar.com', 'asd123');
+
+    IF NOT EXISTS (SELECT 1 FROM dbo.usuario WHERE email = 'miembro3@oscar.com')
+      INSERT INTO dbo.usuario (id_rol, nombre, apellido, email, password_hash)
+      VALUES ((SELECT id_rol FROM dbo.rol WHERE nombre = 'ACADEMY_MEMBER'), 'Tomas', 'Herrera', 'miembro3@oscar.com', 'asd123');
+
     IF NOT EXISTS (SELECT 1 FROM dbo.usuario WHERE email = 'usuario@oscar.com')
       INSERT INTO dbo.usuario (id_rol, nombre, apellido, email, password_hash)
       VALUES ((SELECT id_rol FROM dbo.rol WHERE nombre = 'COMMON_USER'), 'Usuario', 'Comun', 'usuario@oscar.com', 'asd123');
+
+    IF NOT EXISTS (SELECT 1 FROM dbo.usuario WHERE email = 'usuario2@oscar.com')
+      INSERT INTO dbo.usuario (id_rol, nombre, apellido, email, password_hash)
+      VALUES ((SELECT id_rol FROM dbo.rol WHERE nombre = 'COMMON_USER'), 'Paula', 'Gomez', 'usuario2@oscar.com', 'asd123');
+
+    IF NOT EXISTS (SELECT 1 FROM dbo.usuario WHERE email = 'usuario3@oscar.com')
+      INSERT INTO dbo.usuario (id_rol, nombre, apellido, email, password_hash)
+      VALUES ((SELECT id_rol FROM dbo.rol WHERE nombre = 'COMMON_USER'), 'Nicolas', 'Ruiz', 'usuario3@oscar.com', 'asd123');
   `);
   logger.info({ database: env.sql.database }, "SQL Server schema ready");
 }
