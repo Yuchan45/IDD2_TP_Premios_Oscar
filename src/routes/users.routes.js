@@ -1,6 +1,8 @@
 const { Router } = require("express");
 const userController = require("../controllers/user.controller");
 const validateRequest = require("../middlewares/validateRequest");
+const authenticate = require("../middlewares/authenticate");
+const authorize = require("../middlewares/authorize");
 const {
   userIdValidation,
   createUserValidation,
@@ -8,6 +10,8 @@ const {
 } = require("../validations/user.validation");
 
 const router = Router();
+
+router.use(authenticate, authorize("ADMIN"));
 
 router.get("/", userController.list);
 router.get("/:id", userIdValidation, validateRequest, userController.get);
