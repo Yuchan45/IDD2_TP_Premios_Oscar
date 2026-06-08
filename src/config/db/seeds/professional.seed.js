@@ -90,6 +90,12 @@ const BASE_PROFESSIONALS = [
     apellido: "Blunt",
     nacionalidad: "Britanica",
     roles: [{ nombre: "Actor Principal" }, { nombre: "Actor Secundario" }]
+  },
+  {
+    nombre: "Steven",
+    apellido: "Spielberg",
+    nacionalidad: "Estadounidense",
+    roles: [{ nombre: "Director" }, { nombre: "Productor" }]
   }
 ];
 

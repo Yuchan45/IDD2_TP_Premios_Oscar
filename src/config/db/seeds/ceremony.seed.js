@@ -21,22 +21,53 @@ const BASE_CEREMONIES = [
   }
 ];
 
-const NOMINATION_DEFINITIONS = [
-  { categoria: "Mejor Pelicula", pelicula: "Oppenheimer" },
-  { categoria: "Mejor Pelicula", pelicula: "Poor Things" },
-  { categoria: "Mejor Pelicula", pelicula: "Barbie" },
-  { categoria: "Mejor Actor", profesional: "Cillian Murphy" },
-  { categoria: "Mejor Actriz", profesional: "Emma Stone" },
-  { categoria: "Mejor Director", profesional: "Christopher Nolan" },
-  { categoria: "Mejor Director", profesional: "Greta Gerwig" },
-  { categoria: "Mejor Productor", profesional: "Margot Robbie" },
-  { categoria: "Mejor Productor", profesional: "Christopher Nolan" }
-];
+const NOMINATION_DEFINITIONS_BY_YEAR = {
+  2025: [
+    { categoria: "Mejor Pelicula", pelicula: "Oppenheimer" },
+    { categoria: "Mejor Pelicula", pelicula: "Poor Things" },
+    { categoria: "Mejor Pelicula", pelicula: "Barbie" },
+    { categoria: "Mejor Actor", profesional: "Cillian Murphy" },
+    { categoria: "Mejor Actor", profesional: "Matt Damon" },
+    { categoria: "Mejor Actor", profesional: "Robert Downey Jr" },
+    { categoria: "Mejor Director", profesional: "Christopher Nolan" },
+    { categoria: "Mejor Director", profesional: "Greta Gerwig" },
+    { categoria: "Mejor Director", profesional: "Steven Spielberg" },
+    { categoria: "Mejor Productor", profesional: "Christopher Nolan" },
+    { categoria: "Mejor Productor", profesional: "Margot Robbie" },
+    { categoria: "Mejor Productor", profesional: "Steven Spielberg" }
+  ],
+  2024: [
+    { categoria: "Mejor Pelicula", pelicula: "Avengers: Endgame" },
+    { categoria: "Mejor Pelicula", pelicula: "The Martian" },
+    { categoria: "Mejor Pelicula", pelicula: "Spotlight" },
+    { categoria: "Mejor Actriz", profesional: "Emma Stone" },
+    { categoria: "Mejor Actriz", profesional: "Emily Blunt" },
+    { categoria: "Mejor Actriz", profesional: "Jennifer Aniston" },
+    { categoria: "Mejor Director", profesional: "Steven Spielberg" },
+    { categoria: "Mejor Director", profesional: "Christopher Nolan" },
+    { categoria: "Mejor Director", profesional: "Greta Gerwig" },
+    { categoria: "Mejor Productor", profesional: "Matt Damon" },
+    { categoria: "Mejor Productor", profesional: "Christopher Nolan" },
+    { categoria: "Mejor Productor", profesional: "Margot Robbie" }
+  ],
+  2023: [
+    { categoria: "Mejor Pelicula", pelicula: "Iron Man" },
+    { categoria: "Mejor Pelicula", pelicula: "Scream" },
+    { categoria: "Mejor Pelicula", pelicula: "A Quiet Place Part II" },
+    { categoria: "Mejor Actor", profesional: "Robert Downey Jr" },
+    { categoria: "Mejor Actor", profesional: "Mark Ruffalo" },
+    { categoria: "Mejor Actor", profesional: "David Schwimmer" },
+    { categoria: "Mejor Actriz", profesional: "Courteney Cox" },
+    { categoria: "Mejor Actriz", profesional: "Lisa Kudrow" },
+    { categoria: "Mejor Actriz", profesional: "Emily Blunt" }
+  ]
+};
 
 async function seedCeremonies() {
+  const allDefinitions = Object.values(NOMINATION_DEFINITIONS_BY_YEAR).flat();
   const [categories, movies, professionals] = await Promise.all([
-    Category.find({ nombre: { $in: NOMINATION_DEFINITIONS.map((nomination) => nomination.categoria) } }),
-    Movie.find({ titulo: { $in: NOMINATION_DEFINITIONS.filter((nomination) => nomination.pelicula).map((nomination) => nomination.pelicula) } }),
+    Category.find({ nombre: { $in: allDefinitions.map((nomination) => nomination.categoria) } }),
+    Movie.find({ titulo: { $in: allDefinitions.filter((nomination) => nomination.pelicula).map((nomination) => nomination.pelicula) } }),
     Professional.find()
   ]);
 
@@ -49,71 +80,77 @@ async function seedCeremonies() {
     ])
   );
 
-  const nominations = NOMINATION_DEFINITIONS.map((definition) => {
-    const category = categoryByName.get(definition.categoria);
-    if (!category) {
-      return null;
-    }
-
-    const nomination = {
-      categoria: {
-        id: category._id,
-        nombre: category.nombre
-      },
-      pelicula: null,
-      profesional: null,
-      esGanador: false
-    };
-
-    if (definition.pelicula) {
-      const movie = movieByTitle.get(definition.pelicula);
-      if (!movie) {
+  function buildNominations(definitions) {
+    return definitions.map((definition) => {
+      const category = categoryByName.get(definition.categoria);
+      if (!category) {
         return null;
       }
 
-      nomination.pelicula = {
-        id: movie._id,
-        titulo: movie.titulo
-      };
-    }
-
-    if (definition.profesional) {
-      const professional = professionalByFullName.get(definition.profesional);
-      if (!professional) {
-        return null;
-      }
-
-      nomination.profesional = {
-        id: professional._id,
-        nombreCompleto: `${professional.nombre} ${professional.apellido}`
-      };
-    }
-
-    return nomination;
-  }).filter(Boolean);
-
-  const operations = BASE_CEREMONIES.map((ceremony) => ({
-    updateOne: {
-      filter: { anio: ceremony.anio },
-      update: {
-        $set: {
-          fecha: ceremony.fecha,
-          lugar: ceremony.lugar,
-          estado: ceremony.estado
+      const nomination = {
+        categoria: {
+          id: category._id,
+          nombre: category.nombre
         },
-        $setOnInsert: {
-          anio: ceremony.anio,
-          actuaciones: [],
-          nominaciones: nominations,
-          premios: []
+        pelicula: null,
+        profesional: null,
+        esGanador: false
+      };
+
+      if (definition.pelicula) {
+        const movie = movieByTitle.get(definition.pelicula);
+        if (!movie) {
+          return null;
         }
-      },
-      upsert: true
-    }
-  }));
+
+        nomination.pelicula = {
+          id: movie._id,
+          titulo: movie.titulo
+        };
+      }
+
+      if (definition.profesional) {
+        const professional = professionalByFullName.get(definition.profesional);
+        if (!professional) {
+          return null;
+        }
+
+        nomination.profesional = {
+          id: professional._id,
+          nombreCompleto: `${professional.nombre} ${professional.apellido}`
+        };
+      }
+
+      return nomination;
+    }).filter(Boolean);
+  }
+
+  const operations = BASE_CEREMONIES.map((ceremony) => {
+    const nominations = buildNominations(NOMINATION_DEFINITIONS_BY_YEAR[ceremony.anio] || []);
+
+    return {
+      updateOne: {
+        filter: { anio: ceremony.anio },
+        update: {
+          $set: {
+            fecha: ceremony.fecha,
+            lugar: ceremony.lugar,
+            estado: ceremony.estado,
+            nominaciones: nominations
+          },
+          $setOnInsert: {
+            anio: ceremony.anio,
+            actuaciones: [],
+            premios: []
+          }
+        },
+        upsert: true
+      }
+    };
+  });
 
   if (!operations.length) {
-    return { processed: 0, nominations: nominations.length };
+    return { processed: 0, nominations: 0 };
   }
 
   const yearsToKeep = BASE_CEREMONIES.map((ceremony) => ceremony.anio);
@@ -123,7 +160,12 @@ async function seedCeremonies() {
   return {
     processed: operations.length,
     activeYears: yearsToKeep,
-    nominations: nominations.length,
+    nominationsByYear: Object.fromEntries(
+      BASE_CEREMONIES.map((ceremony) => [
+        ceremony.anio,
+        (NOMINATION_DEFINITIONS_BY_YEAR[ceremony.anio] || []).length
+      ])
+    ),
     deletedLegacy: deleteResult.deletedCount || 0,
     inserted: result.upsertedCount || 0,
     modified: result.modifiedCount || 0,
