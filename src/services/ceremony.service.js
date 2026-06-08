@@ -2,6 +2,7 @@ const ceremonyRepository = require("../repositories/ceremony.repository");
 const voteRepository = require("../repositories/vote.repository");
 const categoryRepository = require("../repositories/category.repository");
 const { getRedisClient } = require("../config/db/redis");
+const { rebuildHistoricalProjections } = require("./history-projection.service");
 const HttpError = require("../utils/httpError");
 
 function findAll(filters) {
@@ -56,6 +57,10 @@ function sortByVotesDesc(left, right) {
   return String(left.nominacion.id).localeCompare(String(right.nominacion.id));
 }
 
+function nominationLabel(nomination) {
+  return nomination.pelicula?.titulo || nomination.profesional?.nombreCompleto || "-";
+}
+
 async function findById(id) {
   const ceremony = await ceremonyRepository.findById(id);
   if (!ceremony) {
@@ -96,9 +101,72 @@ async function close(id) {
   if (ceremony.estado === "cerrada")
     throw new HttpError(409, "La ceremonia ya esta cerrada.");
 
+  const originalState = ceremony.estado;
+  const originalPremios = ceremony.premios.map((premio) => premio.toObject());
+  const originalWinnerMap = new Map(
+    ceremony.nominaciones.map((nomination) => [nomination._id.toString(), nomination.esGanador])
+  );
+
   const voteCounts = await voteRepository.countsByCeremony({ ceremonyId: id });
 
   // Por cada categoría, quedarse con la nominación que tenga más votos
+  const countsByCategory = new Map();
+
+  for (const count of voteCounts) {
+    const categoryId = count.categoryId.toString();
+    const categoryCounts = countsByCategory.get(categoryId) || [];
+    categoryCounts.push(count);
+    countsByCategory.set(categoryId, categoryCounts);
+  }
+
+  const tiedCategories = [];
+  for (const [categoryId, categoryCounts] of countsByCategory.entries()) {
+    const highestVotes = Math.max(...categoryCounts.map((count) => count.votos), 0);
+    if (highestVotes <= 0) {
+      continue;
+    }
+
+    const leaders = categoryCounts.filter((count) => count.votos === highestVotes);
+    if (leaders.length <= 1) {
+      continue;
+    }
+
+    const nomination = ceremony.nominaciones.find(
+      (item) => item.categoria.id.toString() === categoryId
+    );
+
+    tiedCategories.push({
+      categoryId,
+      categoryName: nomination?.categoria.nombre || "Categoria",
+      votes: highestVotes,
+      nominations: leaders
+        .map((leader) => {
+          const currentNomination = ceremony.nominaciones.id(leader.nominacionId);
+          if (!currentNomination) {
+            return null;
+          }
+
+          return {
+            id: currentNomination._id.toString(),
+            label: nominationLabel(currentNomination),
+            tipo: currentNomination.pelicula ? "pelicula" : "profesional"
+          };
+        })
+        .filter(Boolean)
+    });
+  }
+
+  if (tiedCategories.length) {
+    throw new HttpError(
+      409,
+      "No se puede cerrar la ceremonia porque hay categorias empatadas.",
+      {
+        blockedByTie: true,
+        categories: tiedCategories
+      }
+    );
+  }
+
   const winnerByCategory = {};
   for (const { nominacionId, votos } of voteCounts) {
     const nom = ceremony.nominaciones.id(nominacionId);
@@ -126,9 +194,25 @@ async function close(id) {
   ceremony.estado = "cerrada";
   const saved = await ceremony.save();
 
-  await getRedisClient().set(`ceremony:closed:${id}`, "1");
+  try {
+    await rebuildHistoricalProjections();
+    await getRedisClient().set(`ceremony:closed:${id}`, "1");
+    return saved;
+  } catch (error) {
+    saved.estado = originalState;
+    saved.premios = originalPremios;
 
-  return saved;
+    for (const nomination of saved.nominaciones) {
+      nomination.esGanador = originalWinnerMap.get(nomination._id.toString()) || false;
+    }
+
+    await saved.save();
+    throw new HttpError(
+      503,
+      "No se pudo sincronizar la ceremonia cerrada en Cassandra. Se revirtio el cierre.",
+      error.message
+    );
+  }
 }
 
 async function findNominaciones(id, filters) {
