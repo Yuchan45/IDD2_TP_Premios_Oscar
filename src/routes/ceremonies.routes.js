@@ -21,11 +21,12 @@ const router = Router();
 router.get("/", cache("ceremonies", 120), ceremonyController.list);
 // Devuelve el detalle completo de una ceremonia por ID.
 router.get("/:id", ceremonyIdValidation, validateRequest, cache("ceremonies", 120), ceremonyController.get);
-// Devuelve el resumen de resultados de una ceremonia agrupado por categoria.
-router.get("/:id/results", ceremonyIdValidation, validateRequest, ceremonyController.results);
-// Devuelve el ranking de nominaciones por votos para una categoria dentro de una ceremonia.
+// Devuelve el resumen de resultados de una ceremonia agrupada por categoria (solo cerradas).
+router.get("/:id/results", authenticate, ceremonyIdValidation, validateRequest, ceremonyController.results);
+// Devuelve el ranking de votos por categoria (admin si abierta, todos si cerrada).
 router.get(
   "/:id/categories/:categoryId/leaderboard",
+  authenticate,
   ceremonyCategoryValidation,
   validateRequest,
   ceremonyController.leaderboard

@@ -1,4 +1,4 @@
-const { Category, Professional, Movie, Ceremony } = require("../../models");
+const { Category, Professional, Movie, Ceremony, Vote } = require("../../models");
 const { logger } = require("../logger");
 
 async function seedMongo() {
@@ -166,7 +166,7 @@ async function seedMongo() {
       };
     });
 
-  await Ceremony.create({
+  const ceremony96 = await Ceremony.create({
     anio: 2024,
     fecha: new Date("2024-03-10"),
     lugar: "Dolby Theatre, Los Ángeles",
@@ -179,7 +179,7 @@ async function seedMongo() {
   });
 
   // ── Ceremonia 97 — ABIERTA (Oscar 2025) ───────────────────────────────────
-  await Ceremony.create({
+  const ceremony97 = await Ceremony.create({
     anio: 2025,
     fecha: new Date("2025-03-02"),
     lugar: "Dolby Theatre, Los Ángeles",
@@ -201,7 +201,84 @@ async function seedMongo() {
     premios: [],
   });
 
-  logger.info("MongoDB seed complete: 10 categorías, 14 profesionales, 7 películas, 2 ceremonias");
+  // ── Votos ─────────────────────────────────────────────────────────────────
+  // Helper: encontrar el _id de una nominación por categoría + nombre del nominado
+  const nomId = (ceremony, catNombre, nomNombre) => {
+    const n = ceremony.nominaciones.find(
+      (n) =>
+        n.categoria.nombre === catNombre &&
+        (n.pelicula?.titulo === nomNombre || n.profesional?.nombreCompleto === nomNombre)
+    );
+    if (!n) throw new Error(`Seed: nominación no encontrada — ${catNombre} / ${nomNombre}`);
+    return n._id;
+  };
+
+  const catId = (nombre) => cat(nombre)._id;
+
+  // 12 usuarios ficticios para la ceremonia cerrada (2024)
+  // Distribución: el ganador tiene mayoría de votos, el resto comparte los demás
+  const votes96 = [
+    // Mejor Película — Oppenheimer gana 7/12
+    ...["u01","u02","u03","u04","u05","u06","u07"].map((u) => ({ userId: `seed_${u}`, ceremonyId: ceremony96._id, categoryId: catId("Mejor Película"),          nominacionId: nomId(ceremony96, "Mejor Película",          "Oppenheimer") })),
+    ...["u08","u09"]                              .map((u) => ({ userId: `seed_${u}`, ceremonyId: ceremony96._id, categoryId: catId("Mejor Película"),          nominacionId: nomId(ceremony96, "Mejor Película",          "Poor Things") })),
+    { userId: "seed_u10", ceremonyId: ceremony96._id, categoryId: catId("Mejor Película"), nominacionId: nomId(ceremony96, "Mejor Película", "Killers of the Flower Moon") },
+    { userId: "seed_u11", ceremonyId: ceremony96._id, categoryId: catId("Mejor Película"), nominacionId: nomId(ceremony96, "Mejor Película", "The Holdovers") },
+    { userId: "seed_u12", ceremonyId: ceremony96._id, categoryId: catId("Mejor Película"), nominacionId: nomId(ceremony96, "Mejor Película", "Anatomía de una Caída") },
+
+    // Mejor Director — Nolan gana 8/12
+    ...["u01","u02","u03","u04","u05","u06","u07","u08"].map((u) => ({ userId: `seed_${u}`, ceremonyId: ceremony96._id, categoryId: catId("Mejor Director"), nominacionId: nomId(ceremony96, "Mejor Director", "Christopher Nolan") })),
+    ...["u09","u10"]                                    .map((u) => ({ userId: `seed_${u}`, ceremonyId: ceremony96._id, categoryId: catId("Mejor Director"), nominacionId: nomId(ceremony96, "Mejor Director", "Yorgos Lanthimos") })),
+    ...["u11","u12"]                                    .map((u) => ({ userId: `seed_${u}`, ceremonyId: ceremony96._id, categoryId: catId("Mejor Director"), nominacionId: nomId(ceremony96, "Mejor Director", "Martin Scorsese") })),
+
+    // Mejor Actor Principal — Murphy gana 9/12
+    ...["u01","u02","u03","u04","u05","u06","u07","u08","u09"].map((u) => ({ userId: `seed_${u}`, ceremonyId: ceremony96._id, categoryId: catId("Mejor Actor Principal"), nominacionId: nomId(ceremony96, "Mejor Actor Principal", "Cillian Murphy") })),
+    ...["u10","u11","u12"]                                    .map((u) => ({ userId: `seed_${u}`, ceremonyId: ceremony96._id, categoryId: catId("Mejor Actor Principal"), nominacionId: nomId(ceremony96, "Mejor Actor Principal", "Leonardo DiCaprio") })),
+
+    // Mejor Actriz Principal — Stone gana 7/12
+    ...["u01","u02","u03","u04","u05","u06","u07"].map((u) => ({ userId: `seed_${u}`, ceremonyId: ceremony96._id, categoryId: catId("Mejor Actriz Principal"), nominacionId: nomId(ceremony96, "Mejor Actriz Principal", "Emma Stone") })),
+    ...["u08","u09","u10"]                        .map((u) => ({ userId: `seed_${u}`, ceremonyId: ceremony96._id, categoryId: catId("Mejor Actriz Principal"), nominacionId: nomId(ceremony96, "Mejor Actriz Principal", "Lily Gladstone") })),
+    ...["u11","u12"]                              .map((u) => ({ userId: `seed_${u}`, ceremonyId: ceremony96._id, categoryId: catId("Mejor Actriz Principal"), nominacionId: nomId(ceremony96, "Mejor Actriz Principal", "Cate Blanchett") })),
+
+    // Mejor Actor de Reparto — Downey Jr gana 10/12
+    ...["u01","u02","u03","u04","u05","u06","u07","u08","u09","u10"].map((u) => ({ userId: `seed_${u}`, ceremonyId: ceremony96._id, categoryId: catId("Mejor Actor de Reparto"), nominacionId: nomId(ceremony96, "Mejor Actor de Reparto", "Robert Downey Jr") })),
+    ...["u11","u12"]                                                 .map((u) => ({ userId: `seed_${u}`, ceremonyId: ceremony96._id, categoryId: catId("Mejor Actor de Reparto"), nominacionId: nomId(ceremony96, "Mejor Actor de Reparto", "Ryan Gosling") })),
+
+    // Mejor Actriz de Reparto — Randolph gana 12/12 (única nominada)
+    ...["u01","u02","u03","u04","u05","u06","u07","u08","u09","u10","u11","u12"].map((u) => ({ userId: `seed_${u}`, ceremonyId: ceremony96._id, categoryId: catId("Mejor Actriz de Reparto"), nominacionId: nomId(ceremony96, "Mejor Actriz de Reparto", "Da'Vine Joy Randolph") })),
+
+    // Mejor Película Internacional — La Zona de Interés gana 9/12
+    ...["u01","u02","u03","u04","u05","u06","u07","u08","u09"].map((u) => ({ userId: `seed_${u}`, ceremonyId: ceremony96._id, categoryId: catId("Mejor Película Internacional"), nominacionId: nomId(ceremony96, "Mejor Película Internacional", "La Zona de Interés") })),
+    ...["u10","u11","u12"]                                    .map((u) => ({ userId: `seed_${u}`, ceremonyId: ceremony96._id, categoryId: catId("Mejor Película Internacional"), nominacionId: nomId(ceremony96, "Mejor Película Internacional", "Anatomía de una Caída") })),
+  ];
+
+  // 5 usuarios en la ceremonia abierta (2025) — votación parcial
+  const votes97 = [
+    // Mejor Película (5 votos)
+    { userId: "seed_u01", ceremonyId: ceremony97._id, categoryId: catId("Mejor Película"), nominacionId: nomId(ceremony97, "Mejor Película", "Oppenheimer") },
+    { userId: "seed_u02", ceremonyId: ceremony97._id, categoryId: catId("Mejor Película"), nominacionId: nomId(ceremony97, "Mejor Película", "Barbie") },
+    { userId: "seed_u03", ceremonyId: ceremony97._id, categoryId: catId("Mejor Película"), nominacionId: nomId(ceremony97, "Mejor Película", "Barbie") },
+    { userId: "seed_u04", ceremonyId: ceremony97._id, categoryId: catId("Mejor Película"), nominacionId: nomId(ceremony97, "Mejor Película", "Poor Things") },
+    { userId: "seed_u05", ceremonyId: ceremony97._id, categoryId: catId("Mejor Película"), nominacionId: nomId(ceremony97, "Mejor Película", "Oppenheimer") },
+    // Mejor Director (3 votos)
+    { userId: "seed_u01", ceremonyId: ceremony97._id, categoryId: catId("Mejor Director"), nominacionId: nomId(ceremony97, "Mejor Director", "Greta Gerwig") },
+    { userId: "seed_u02", ceremonyId: ceremony97._id, categoryId: catId("Mejor Director"), nominacionId: nomId(ceremony97, "Mejor Director", "Greta Gerwig") },
+    { userId: "seed_u03", ceremonyId: ceremony97._id, categoryId: catId("Mejor Director"), nominacionId: nomId(ceremony97, "Mejor Director", "Christopher Nolan") },
+    // Mejor Actriz Principal (3 votos)
+    { userId: "seed_u01", ceremonyId: ceremony97._id, categoryId: catId("Mejor Actriz Principal"), nominacionId: nomId(ceremony97, "Mejor Actriz Principal", "Emma Stone") },
+    { userId: "seed_u02", ceremonyId: ceremony97._id, categoryId: catId("Mejor Actriz Principal"), nominacionId: nomId(ceremony97, "Mejor Actriz Principal", "Emma Stone") },
+    { userId: "seed_u03", ceremonyId: ceremony97._id, categoryId: catId("Mejor Actriz Principal"), nominacionId: nomId(ceremony97, "Mejor Actriz Principal", "Cate Blanchett") },
+    // Mejor Actor de Reparto (2 votos)
+    { userId: "seed_u01", ceremonyId: ceremony97._id, categoryId: catId("Mejor Actor de Reparto"), nominacionId: nomId(ceremony97, "Mejor Actor de Reparto", "Ryan Gosling") },
+    { userId: "seed_u04", ceremonyId: ceremony97._id, categoryId: catId("Mejor Actor de Reparto"), nominacionId: nomId(ceremony97, "Mejor Actor de Reparto", "Ryan Gosling") },
+    // Mejor Guión Original (2 votos)
+    { userId: "seed_u01", ceremonyId: ceremony97._id, categoryId: catId("Mejor Guión Original"), nominacionId: nomId(ceremony97, "Mejor Guión Original", "Barbie") },
+    { userId: "seed_u02", ceremonyId: ceremony97._id, categoryId: catId("Mejor Guión Original"), nominacionId: nomId(ceremony97, "Mejor Guión Original", "Anatomía de una Caída") },
+    // Mejor Actor Principal — sin votos aún (intencionalmente)
+  ];
+
+  await Vote.insertMany([...votes96, ...votes97], { ordered: false });
+
+  logger.info("MongoDB seed complete: 10 categorías, 14 profesionales, 7 películas, 2 ceremonias, votos simulados");
 }
 
 module.exports = { seedMongo };

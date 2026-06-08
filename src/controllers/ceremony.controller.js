@@ -1,5 +1,6 @@
 const ceremonyService = require("../services/ceremony.service");
 const asyncHandler = require("../utils/asyncHandler");
+const HttpError = require("../utils/httpError");
 
 const list = asyncHandler(async (req, res) => {
   const data = await ceremonyService.findAll(req.query);
@@ -37,12 +38,29 @@ const listNominaciones = asyncHandler(async (req, res) => {
 });
 
 const results = asyncHandler(async (req, res) => {
+  const ceremony = await ceremonyService.findById(req.params.id);
+  if (ceremony.estado !== "cerrada") {
+    throw new HttpError(
+      403,
+      "Los resultados solo están disponibles cuando la ceremonia está cerrada.",
+    );
+  }
   const data = await ceremonyService.getResults(req.params.id);
   res.json({ data });
 });
 
 const leaderboard = asyncHandler(async (req, res) => {
-  const data = await ceremonyService.getCategoryLeaderboard(req.params.id, req.params.categoryId);
+  const ceremony = await ceremonyService.findById(req.params.id);
+  if (ceremony.estado === "abierta" && req.user.rol !== "ADMIN") {
+    throw new HttpError(
+      403,
+      "El leaderboard de una ceremonia abierta es solo visible para administradores.",
+    );
+  }
+  const data = await ceremonyService.getCategoryLeaderboard(
+    req.params.id,
+    req.params.categoryId,
+  );
   res.json({ data });
 });
 
@@ -52,12 +70,19 @@ const addNominacion = asyncHandler(async (req, res) => {
 });
 
 const updateNominacion = asyncHandler(async (req, res) => {
-  const data = await ceremonyService.updateNominacion(req.params.id, req.params.nomId, req.body);
+  const data = await ceremonyService.updateNominacion(
+    req.params.id,
+    req.params.nomId,
+    req.body,
+  );
   res.json({ data });
 });
 
 const removeNominacion = asyncHandler(async (req, res) => {
-  const data = await ceremonyService.removeNominacion(req.params.id, req.params.nomId);
+  const data = await ceremonyService.removeNominacion(
+    req.params.id,
+    req.params.nomId,
+  );
   res.json({ data });
 });
 
@@ -73,5 +98,5 @@ module.exports = {
   leaderboard,
   addNominacion,
   updateNominacion,
-  removeNominacion
+  removeNominacion,
 };
