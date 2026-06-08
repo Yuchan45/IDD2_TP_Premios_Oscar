@@ -1,6 +1,6 @@
 const { body, checkExact, param } = require("express-validator");
 
-const validRoles = ["Actor Principal", "Actor Secundario", "Director", "Productor"];
+const validRoles = ["Actor Principal", "Actor Secundario", "Director", "Productor", "Otro"];
 
 const professionalIdValidation = [param("id").isMongoId()];
 
