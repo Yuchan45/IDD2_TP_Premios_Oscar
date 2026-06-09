@@ -12,16 +12,16 @@ async function seedMongo() {
 
   // ── Categorías ────────────────────────────────────────────────────────────
   const categories = await Category.insertMany([
-    { nombre: "Mejor Película",           descripcion: "La mejor producción cinematográfica del año" },
-    { nombre: "Mejor Director",           descripcion: "La mejor dirección de una película" },
-    { nombre: "Mejor Actor Principal",    descripcion: "La mejor actuación masculina protagónica" },
-    { nombre: "Mejor Actriz Principal",   descripcion: "La mejor actuación femenina protagónica" },
-    { nombre: "Mejor Actor de Reparto",   descripcion: "La mejor actuación masculina secundaria" },
-    { nombre: "Mejor Actriz de Reparto",  descripcion: "La mejor actuación femenina secundaria" },
-    { nombre: "Mejor Guión Original",     descripcion: "El mejor guión escrito directamente para la pantalla" },
-    { nombre: "Mejor Guión Adaptado",     descripcion: "El mejor guión basado en material previo" },
-    { nombre: "Mejor Película Internacional", descripcion: "La mejor película no hablada en inglés" },
-    { nombre: "Mejor Banda Sonora",       descripcion: "La mejor música original compuesta para una película" },
+    { nombre: "Mejor Película",               descripcion: "La mejor producción cinematográfica del año",        tipo: "pelicula" },
+    { nombre: "Mejor Director",               descripcion: "La mejor dirección de una película",                 tipo: "profesional" },
+    { nombre: "Mejor Actor Principal",        descripcion: "La mejor actuación masculina protagónica",           tipo: "profesional" },
+    { nombre: "Mejor Actriz Principal",       descripcion: "La mejor actuación femenina protagónica",           tipo: "profesional" },
+    { nombre: "Mejor Actor de Reparto",       descripcion: "La mejor actuación masculina secundaria",            tipo: "profesional" },
+    { nombre: "Mejor Actriz de Reparto",      descripcion: "La mejor actuación femenina secundaria",            tipo: "profesional" },
+    { nombre: "Mejor Guión Original",         descripcion: "El mejor guión escrito directamente para la pantalla", tipo: "pelicula" },
+    { nombre: "Mejor Guión Adaptado",         descripcion: "El mejor guión basado en material previo",          tipo: "pelicula" },
+    { nombre: "Mejor Película Internacional", descripcion: "La mejor película no hablada en inglés",            tipo: "pelicula" },
+    { nombre: "Mejor Banda Sonora",           descripcion: "La mejor música original compuesta para una película", tipo: "pelicula" },
   ]);
 
   const cat = (nombre) => categories.find((c) => c.nombre === nombre);

@@ -5,6 +5,7 @@ const authorize = require("../middlewares/authorize");
 const validateRequest = require("../middlewares/validateRequest");
 const {
   castVoteValidation,
+  changeVoteValidation,
   myVoteStatusValidation,
   myVotesQueryValidation,
   nominationVoteStatusValidation,
@@ -22,6 +23,14 @@ router.post(
   castVoteValidation,
   validateRequest,
   voteController.cast
+);
+// Cambia el voto del usuario autenticado dentro de una misma categoria.
+router.put(
+  "/",
+  authorize("ACADEMY_MEMBER"),
+  changeVoteValidation,
+  validateRequest,
+  voteController.change
 );
 // Devuelve los votos emitidos por el usuario autenticado con filtros opcionales.
 router.get("/my-votes", myVotesQueryValidation, validateRequest, voteController.myVote);

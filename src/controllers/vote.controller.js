@@ -8,6 +8,13 @@ const cast = asyncHandler(async (req, res) => {
   res.status(201).json({ data });
 });
 
+const change = asyncHandler(async (req, res) => {
+  const idUsuario = req.user.id;
+  const { idCeremonia, nominacionId } = req.body;
+  const data = await voteService.changeVote({ idUsuario, idCeremonia, nominacionId });
+  res.json({ data });
+});
+
 const myVote = asyncHandler(async (req, res) => {
   const { idCeremonia, idCategoria } = req.query;
   const idUsuario = req.user.id;
@@ -35,4 +42,4 @@ const nominationStatus = asyncHandler(async (req, res) => {
   res.json({ data });
 });
 
-module.exports = { cast, myVote, counts, myStatus, nominationStatus };
+module.exports = { cast, change, myVote, counts, myStatus, nominationStatus };
