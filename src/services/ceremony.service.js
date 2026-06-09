@@ -3,6 +3,7 @@ const voteRepository = require("../repositories/vote.repository");
 const categoryRepository = require("../repositories/category.repository");
 const { getRedisClient } = require("../config/db/redis");
 const { rebuildHistoricalProjections } = require("./history-projection.service");
+const { logger } = require("../config/logger");
 const HttpError = require("../utils/httpError");
 
 function findAll(filters) {
@@ -198,7 +199,7 @@ async function close(id) {
     await rebuildHistoricalProjections();
     await getRedisClient().set(`ceremony:closed:${id}`, "1");
     return saved;
-  } catch (error) {
+  } catch (cassandraError) {
     saved.estado = originalState;
     saved.premios = originalPremios;
 
@@ -206,11 +207,19 @@ async function close(id) {
       nomination.esGanador = originalWinnerMap.get(nomination._id.toString()) || false;
     }
 
-    await saved.save();
+    try {
+      await saved.save();
+    } catch (rollbackError) {
+      logger.error(
+        { ceremonyId: id, cassandraError, rollbackError },
+        "CRITICAL: Cassandra write failed and MongoDB rollback also failed. Ceremony state is inconsistent."
+      );
+    }
+
     throw new HttpError(
       503,
       "No se pudo sincronizar la ceremonia cerrada en Cassandra. Se revirtio el cierre.",
-      error.message
+      cassandraError.message
     );
   }
 }

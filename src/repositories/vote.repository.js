@@ -57,6 +57,14 @@ function findUserVoteByCategory({ userId, ceremonyId, categoryId }) {
   return Vote.findOne({ userId, ceremonyId, categoryId });
 }
 
+function updateNominacionId({ userId, ceremonyId, categoryId, nominacionId }) {
+  return Vote.findOneAndUpdate(
+    { userId, ceremonyId, categoryId },
+    { nominacionId },
+    { new: true }
+  );
+}
+
 module.exports = {
   create,
   findAllByUser,
@@ -64,4 +72,5 @@ module.exports = {
   countTotalByCeremony,
   countByNomination,
   findUserVoteByCategory,
+  updateNominacionId,
 };

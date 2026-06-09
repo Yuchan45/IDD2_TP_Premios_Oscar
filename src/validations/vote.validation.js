@@ -5,6 +5,11 @@ const castVoteValidation = [
   body("nominacionId").isMongoId()
 ];
 
+const changeVoteValidation = [
+  body("idCeremonia").isMongoId(),
+  body("nominacionId").isMongoId()
+];
+
 const voteQueryValidation = [
   query("idCeremonia").isMongoId(),
   query("idCategoria").optional().isMongoId()
@@ -25,6 +30,7 @@ const nominationVoteStatusValidation = [
 
 module.exports = {
   castVoteValidation,
+  changeVoteValidation,
   myVoteStatusValidation,
   myVotesQueryValidation,
   nominationVoteStatusValidation,
