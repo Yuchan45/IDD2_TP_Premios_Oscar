@@ -60,33 +60,6 @@ CREATE TABLE IF NOT EXISTS nominations_by_ceremony (
   PRIMARY KEY (ceremony_id, nomination_id)
 );
 
--- GET /api/history/votes?ceremonyId=&categoryId=
--- Resultados de votación (votos por nominación) dentro de cada categoría de la ceremonia,
--- ordenados naturalmente de mayor a menor cantidad de votos.
-CREATE TABLE IF NOT EXISTS vote_results_by_ceremony (
-  ceremony_id TEXT,
-  category_id TEXT,
-  votos INT,
-  nomination_id TEXT,
-  anio INT,
-  category_name TEXT,
-  nominee_type TEXT,
-  nominee_name TEXT,
-  movie_id TEXT,
-  professional_id TEXT,
-  es_ganador BOOLEAN,
-  PRIMARY KEY ((ceremony_id, category_id), votos, nomination_id)
-) WITH CLUSTERING ORDER BY (votos DESC, nomination_id ASC);
-
--- GET /api/history/movies/top-awarded
-CREATE TABLE IF NOT EXISTS movies_by_award_count (
-  bucket TEXT,
-  award_count INT,
-  movie_id TEXT,
-  titulo TEXT,
-  PRIMARY KEY (bucket, award_count, movie_id)
-) WITH CLUSTERING ORDER BY (award_count DESC, movie_id ASC);
-
 -- GET /api/history/professionals/top-nominated
 CREATE TABLE IF NOT EXISTS professionals_by_nomination_count (
   bucket TEXT,
