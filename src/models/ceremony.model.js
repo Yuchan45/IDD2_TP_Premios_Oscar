@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 const ARTIST_TYPES = ["Cantante", "Solista", "Banda", "Orquesta", "Actor/Cantante", "Coro"];
 const PERFORMANCE_TYPES = ["Musical", "Cancion nominada", "Homenaje", "Apertura", "Intermedio", "Cierre"];
 const WINNER_TYPES = ["pelicula", "profesional"];
+const CATEGORY_TYPES = ["pelicula", "profesional"];
 
 const categorySnapshotSchema = new mongoose.Schema(
   {
@@ -15,6 +16,11 @@ const categorySnapshotSchema = new mongoose.Schema(
       type: String,
       required: true,
       trim: true,
+    },
+    tipo: {
+      type: String,
+      enum: CATEGORY_TYPES,
+      required: false,
     },
   },
   { _id: false },

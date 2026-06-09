@@ -3,23 +3,28 @@ const { Category } = require("../../../models");
 const BASE_CATEGORIES = [
   {
     nombre: "Mejor Actor",
-    descripcion: "Premio al mejor actor principal."
+    descripcion: "Premio al mejor actor principal.",
+    tipo: "profesional"
   },
   {
     nombre: "Mejor Actriz",
-    descripcion: "Premio a la mejor actriz principal."
+    descripcion: "Premio a la mejor actriz principal.",
+    tipo: "profesional"
   },
   {
     nombre: "Mejor Pelicula",
-    descripcion: "Premio a la mejor pelicula."
+    descripcion: "Premio a la mejor pelicula.",
+    tipo: "pelicula"
   },
   {
     nombre: "Mejor Director",
-    descripcion: "Premio a la mejor direccion."
+    descripcion: "Premio a la mejor direccion.",
+    tipo: "profesional"
   },
   {
     nombre: "Mejor Productor",
-    descripcion: "Premio al mejor productor."
+    descripcion: "Premio al mejor productor.",
+    tipo: "profesional"
   }
 ];
 
@@ -29,7 +34,8 @@ async function seedCategories() {
       filter: { nombre: category.nombre },
       update: {
         $set: {
-          descripcion: category.descripcion
+          descripcion: category.descripcion,
+          tipo: category.tipo
         },
         $setOnInsert: {
           nombre: category.nombre

@@ -149,7 +149,8 @@ function buildCategorySummary(category, snapshot, fallbackId) {
     return {
       id: category._id,
       nombre: category.nombre,
-      descripcion: category.descripcion
+      descripcion: category.descripcion,
+      tipo: category.tipo
     };
   }
 
@@ -157,7 +158,8 @@ function buildCategorySummary(category, snapshot, fallbackId) {
     return {
       id: snapshot.id,
       nombre: snapshot.nombre,
-      descripcion: snapshot.descripcion
+      descripcion: snapshot.descripcion,
+      tipo: snapshot.tipo
     };
   }
 

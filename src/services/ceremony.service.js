@@ -25,14 +25,16 @@ function buildCategorySummary(category, snapshot, fallbackId) {
     return {
       id: category._id,
       nombre: category.nombre,
-      descripcion: category.descripcion
+      descripcion: category.descripcion,
+      tipo: category.tipo
     };
   }
 
   if (snapshot) {
     return {
       id: snapshot.id,
-      nombre: snapshot.nombre
+      nombre: snapshot.nombre,
+      tipo: snapshot.tipo
     };
   }
 
@@ -60,6 +62,49 @@ function sortByVotesDesc(left, right) {
 
 function nominationLabel(nomination) {
   return nomination.pelicula?.titulo || nomination.profesional?.nombreCompleto || "-";
+}
+
+async function assertNominationMatchesCategoryType(data, currentNomination = null) {
+  const categoryId =
+    data.categoria?.id?.toString() ||
+    currentNomination?.categoria?.id?.toString();
+
+  if (!categoryId) {
+    throw new HttpError(400, "La nominacion debe incluir una categoria valida.");
+  }
+
+  const category = await categoryRepository.findById(categoryId);
+  if (!category) {
+    throw new HttpError(404, "Categoria no encontrada.");
+  }
+
+  const hasMovie = !!(Object.prototype.hasOwnProperty.call(data, "pelicula")
+    ? data.pelicula
+    : currentNomination?.pelicula);
+  const hasProfessional = !!(Object.prototype.hasOwnProperty.call(data, "profesional")
+    ? data.profesional
+    : currentNomination?.profesional);
+
+  if (hasMovie === hasProfessional) {
+    throw new HttpError(
+      400,
+      "La nominacion debe incluir exactamente una pelicula o un profesional."
+    );
+  }
+
+  if (category.tipo === "pelicula" && !hasMovie) {
+    throw new HttpError(
+      400,
+      `La categoria '${category.nombre}' solo admite nominaciones de peliculas.`
+    );
+  }
+
+  if (category.tipo === "profesional" && !hasProfessional) {
+    throw new HttpError(
+      400,
+      `La categoria '${category.nombre}' solo admite nominaciones de profesionales.`
+    );
+  }
 }
 
 async function findById(id) {
@@ -379,6 +424,7 @@ async function addNominacion(id, data) {
   const ceremony = await ceremonyRepository.findById(id);
   if (!ceremony) throw new HttpError(404, "Ceremonia no encontrada.");
   assertCeremonyIsOpen(ceremony);
+  await assertNominationMatchesCategoryType(data);
   const { esGanador: _, ...safeData } = data;
   ceremony.nominaciones.push(safeData);
   return ceremony.save();
@@ -390,6 +436,7 @@ async function updateNominacion(id, nomId, data) {
   assertCeremonyIsOpen(ceremony);
   const nom = ceremony.nominaciones.id(nomId);
   if (!nom) throw new HttpError(404, "Nominacion no encontrada.");
+  await assertNominationMatchesCategoryType(data, nom);
   const { esGanador: _, ...safeData } = data;
   Object.assign(nom, safeData);
   return ceremony.save();

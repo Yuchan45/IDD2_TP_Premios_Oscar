@@ -65,6 +65,10 @@ const NOMINATION_DEFINITIONS_BY_YEAR = {
   ]
 };
 
+function nominationDefinitionType(definition) {
+  return definition.pelicula ? "pelicula" : "profesional";
+}
+
 async function seedCeremonies() {
   const allDefinitions = Object.values(NOMINATION_DEFINITIONS_BY_YEAR).flat();
   const [categories, movies, professionals] = await Promise.all([
@@ -115,11 +119,19 @@ async function seedCeremonies() {
         return null;
       }
 
+      const expectedType = nominationDefinitionType(definition);
+      if (category.tipo !== expectedType) {
+        throw new Error(
+          `Seed inconsistente: la categoria '${category.nombre}' es de tipo '${category.tipo}' pero la nominacion ${nominationSignature(definition)} es de tipo '${expectedType}'.`
+        );
+      }
+
       const nomination = {
         _id: nominationObjectId(anio, definition),
         categoria: {
           id: category._id,
-          nombre: category.nombre
+          nombre: category.nombre,
+          tipo: category.tipo
         },
         pelicula: null,
         profesional: null,

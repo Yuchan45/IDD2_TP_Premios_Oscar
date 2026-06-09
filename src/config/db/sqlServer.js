@@ -70,20 +70,6 @@ async function ensureSchema(activePool) {
   `);
 
   await activePool.request().query(`
-    IF OBJECT_ID('dbo.votacion', 'U') IS NULL
-    CREATE TABLE dbo.votacion (
-      id_votacion     INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
-      id_usuario      INT NOT NULL,
-      id_categoria    NVARCHAR(24) NOT NULL,
-      id_nominacion   NVARCHAR(24) NOT NULL,
-      id_ceremonia    NVARCHAR(24) NOT NULL,
-      fecha_voto      DATE NOT NULL DEFAULT CAST(SYSUTCDATETIME() AS DATE),
-      CONSTRAINT fk_votacion_usuario FOREIGN KEY (id_usuario) REFERENCES dbo.usuario(id_usuario),
-      CONSTRAINT uq_voto_unico UNIQUE (id_usuario, id_categoria, id_ceremonia)
-    );
-  `);
-
-  await activePool.request().query(`
     IF OBJECT_ID('dbo.auditoria', 'U') IS NULL
     CREATE TABLE dbo.auditoria (
       id_auditoria  INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
@@ -95,6 +81,11 @@ async function ensureSchema(activePool) {
       fecha         DATETIME2 NOT NULL DEFAULT SYSUTCDATETIME(),
       CONSTRAINT fk_auditoria_usuario FOREIGN KEY (id_usuario) REFERENCES dbo.usuario(id_usuario)
     );
+  `);
+
+  await activePool.request().query(`
+    IF OBJECT_ID('dbo.votacion', 'U') IS NOT NULL
+      DROP TABLE dbo.votacion;
   `);
 
   await activePool.request().query(`
