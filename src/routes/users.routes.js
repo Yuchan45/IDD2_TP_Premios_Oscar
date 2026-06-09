@@ -11,11 +11,11 @@ const {
 
 const router = Router();
 
+router.post("/", createUserValidation, validateRequest, userController.create);
 router.use(authenticate, authorize("ADMIN"));
 
 router.get("/", userController.list);
 router.get("/:id", userIdValidation, validateRequest, userController.get);
-router.post("/", createUserValidation, validateRequest, userController.create);
 router.put("/:id", updateUserValidation, validateRequest, userController.update);
 router.delete("/:id", userIdValidation, validateRequest, userController.remove);
 
